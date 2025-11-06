@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { otherAPI } from '../lib/api';
 
 interface LeaderboardPlayer {
@@ -42,11 +43,15 @@ export default function Leaderboard() {
       if (response.ok && data) {
         setLeaderboardData(data);
       } else {
-        setError('Failed to load leaderboard data');
+        const errorMsg = 'Failed to load leaderboard data';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
-      setError('Failed to load leaderboard data');
+      const errorMsg = 'Failed to load leaderboard data';
+      setError(errorMsg);
+      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
     }

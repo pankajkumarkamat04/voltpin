@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { HiSpeakerphone } from 'react-icons/hi';
 import { HiChevronDown } from 'react-icons/hi';
 import { otherAPI } from '../lib/api';
@@ -34,11 +35,15 @@ export default function Announcement() {
       if (response.ok && data.success && data.news) {
         setAnnouncements(data.news);
       } else {
-        setError('Failed to load announcements');
+        const errorMsg = 'Failed to load announcements';
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error('Error fetching announcements:', error);
-      setError('Failed to load announcements');
+      const errorMsg = 'Failed to load announcements';
+      setError(errorMsg);
+      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
     }

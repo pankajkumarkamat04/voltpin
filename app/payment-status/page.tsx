@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { HiMenu, HiUser } from 'react-icons/hi';
 import { HiCheck, HiX } from 'react-icons/hi';
 import { transactionAPI } from '../lib/api';
@@ -56,10 +57,12 @@ function PaymentStatusContent() {
         });
       } else {
         setStatus('failed');
+        toast.error('Failed to fetch transaction status.');
       }
     } catch (error) {
       console.error('Error fetching transaction status:', error);
       setStatus('failed');
+      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
     }

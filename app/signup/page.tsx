@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { authAPI } from '../lib/api';
 
 export default function SignUp() {
@@ -32,12 +33,12 @@ export default function SignUp() {
 
   const handleSignUp = async () => {
     if (!name.trim() || !phoneNumber.trim() || !password.trim()) {
-      alert('Please fill in all fields');
+      toast.error('Please fill in all fields');
       return;
     }
 
     if (password.length < 6) {
-      alert('Password must be at least 6 characters');
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
@@ -58,13 +59,13 @@ export default function SignUp() {
         }
         // Clear login data
         localStorage.removeItem('loginData');
-        alert('Registration successful!');
+        toast.success('Registration successful!');
         router.push('/');
       } else {
-        alert(data.message || 'Registration failed. Please try again.');
+        toast.error(data.message || 'Registration failed. Please try again.');
       }
     } catch (error) {
-      alert('Network error. Please check your connection and try again.');
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }

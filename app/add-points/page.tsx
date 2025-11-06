@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import { walletAPI } from '../lib/api';
 
 export default function AddPoints() {
@@ -35,13 +36,13 @@ export default function AddPoints() {
 
   const handleAddPoints = async () => {
     if (!amount.trim()) {
-      alert('Please enter an amount');
+      toast.error('Please enter an amount');
       return;
     }
 
     const amountNumber = Number(amount);
     if (isNaN(amountNumber) || amountNumber <= 0) {
-      alert('Please enter a valid amount');
+      toast.error('Please enter a valid amount');
       return;
     }
 
@@ -52,18 +53,18 @@ export default function AddPoints() {
 
       if (response.ok && data.success) {
         if (data.transaction?.paymentUrl) {
-          alert('Redirecting to payment...');
+          toast.success('Redirecting to payment...');
           window.location.href = data.transaction.paymentUrl;
         } else {
-          alert('Points added successfully!');
+          toast.success('Points added successfully!');
           setAmount('');
           fetchWalletBalance();
         }
       } else {
-        alert(data.message || 'Failed to add points');
+        toast.error(data.message || 'Failed to add points');
       }
     } catch (error) {
-      alert('An error occurred while adding points');
+      toast.error('An error occurred while adding points');
     } finally {
       setIsLoading(false);
     }

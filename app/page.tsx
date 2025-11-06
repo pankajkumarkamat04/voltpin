@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { HiPlus, HiShoppingBag, HiChartBar, HiPaperAirplane, HiUser } from 'react-icons/hi';
 import BottomNav from './components/BottomNav';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -49,9 +50,12 @@ function HomeContent() {
       const data = await response.json();
       if (response.ok && data.success && data.games) {
         setGames(data.games);
+      } else {
+        toast.error('Failed to load games. Please try again.');
       }
     } catch (error) {
       console.error('Error fetching games:', error);
+      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoadingGames(false);
     }
@@ -65,9 +69,12 @@ function HomeContent() {
       if (response.ok && data.data) {
         const balance = data.data.walletBalance || data.data.user?.walletBalance || 0;
         setWalletBalance(typeof balance === 'number' ? balance : Number(balance) || 0);
+      } else {
+        toast.error('Failed to load wallet balance.');
       }
     } catch (error) {
       console.error('Error fetching wallet balance:', error);
+      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoadingBalance(false);
     }
@@ -80,9 +87,12 @@ function HomeContent() {
       if (response.ok) {
         const user = data.user || data.data || data;
         setUsername(user.name || 'Username');
+      } else {
+        toast.error('Failed to load user information.');
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
+      toast.error('Network error. Please check your connection.');
     }
   };
 

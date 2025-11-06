@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { HiPhone, HiShoppingBag, HiHome, HiPaperAirplane } from 'react-icons/hi';
 import { FiEdit2 } from 'react-icons/fi';
 import { authAPI, walletAPI, otherAPI } from '../lib/api';
@@ -56,13 +57,13 @@ export default function Profile() {
 
       const data = await response.json();
       if (response.ok) {
-        alert('Profile updated successfully!');
+        toast.success('Profile updated successfully!');
         fetchUserData();
       } else {
-        alert(data.message || 'Failed to update profile');
+        toast.error(data.message || 'Failed to update profile');
       }
     } catch (error) {
-      alert('An error occurred while updating profile');
+      toast.error('An error occurred while updating profile');
     } finally {
       setIsUpdating(false);
     }

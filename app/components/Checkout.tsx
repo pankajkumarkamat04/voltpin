@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { gameAPI, orderAPI, walletAPI } from '../lib/api';
 
 interface CheckoutProps {
@@ -72,11 +73,11 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
 
   const handleValidate = async () => {
     if (!userId.trim()) {
-      alert('Please enter your User ID');
+      toast.error('Please enter your User ID');
       return;
     }
     if (!zoneId.trim()) {
-      alert('Please enter your Zone ID');
+      toast.error('Please enter your Zone ID');
       return;
     }
 
@@ -86,7 +87,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       const data = await response.json();
 
       if (response.ok && data.response) {
-        alert('User validated successfully!');
+        toast.success('User validated successfully!');
         if (data.data) {
           setValidatedInfo({
             nickname: data.data.nickname || 'N/A',
@@ -94,11 +95,11 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
           });
         }
       } else {
-        alert(data.data?.msg || 'Invalid ID or Server');
+        toast.error(data.data?.msg || 'Invalid ID or Server');
         setValidatedInfo(null);
       }
     } catch (error) {
-      alert('Network error. Please check your connection and try again.');
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setIsValidating(false);
     }
@@ -106,7 +107,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
 
   const handlePackageSelect = (pkg: any) => {
     if (!userId || !zoneId) {
-      alert('Please validate your User ID and Zone ID first');
+      toast.error('Please validate your User ID and Zone ID first');
       return;
     }
     setSelectedPackage(pkg);
@@ -115,12 +116,12 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
 
   const processWalletPayment = async () => {
     if (!selectedPackage) {
-      alert('No package selected');
+      toast.error('No package selected');
       return;
     }
 
     if (walletBalance < selectedPackage.amount) {
-      alert(`Insufficient coins! You have ${walletBalance} coins but need ${selectedPackage.amount} coins.`);
+      toast.error(`Insufficient coins! You have ${walletBalance} coins but need ${selectedPackage.amount} coins.`);
       return;
     }
 
@@ -136,14 +137,14 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert('Payment completed successfully!');
+        toast.success('Payment completed successfully!');
         setShowPaymentOptions(false);
         router.push('/');
       } else {
-        alert(data.message || 'Failed to process payment');
+        toast.error(data.message || 'Failed to process payment');
       }
     } catch (error) {
-      alert('An error occurred while processing payment');
+      toast.error('An error occurred while processing payment');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -151,7 +152,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
 
   const processUPIPayment = async () => {
     if (!selectedPackage) {
-      alert('No package selected');
+      toast.error('No package selected');
       return;
     }
 
@@ -173,13 +174,13 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       const data = await response.json();
 
       if (response.ok && data.success && data.transaction?.paymentUrl) {
-        alert('Payment request created successfully! Redirecting...');
+        toast.success('Payment request created successfully! Redirecting...');
         window.location.href = data.transaction.paymentUrl;
       } else {
-        alert(data.message || 'Failed to create payment request');
+        toast.error(data.message || 'Failed to create payment request');
       }
     } catch (error) {
-      alert('An error occurred while processing payment');
+      toast.error('An error occurred while processing payment');
     } finally {
       setIsProcessingPayment(false);
     }
@@ -421,9 +422,9 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                     onClick={() => {
                       if (couponCode.trim()) {
                         setAppliedCoupon(couponCode.trim());
-                        alert(`Coupon "${couponCode.trim()}" applied successfully!`);
+                        toast.success(`Coupon "${couponCode.trim()}" applied successfully!`);
                       } else {
-                        alert('Please enter a coupon code');
+                        toast.error('Please enter a coupon code');
                       }
                     }}
                     className="bg-[#2F6BFD] text-white px-4 py-2 rounded-lg font-semibold text-xs shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"

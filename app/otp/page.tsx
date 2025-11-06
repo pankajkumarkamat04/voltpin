@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { authAPI } from '../lib/api';
 
 export default function OTPVerification() {
@@ -176,7 +177,7 @@ export default function OTPVerification() {
               onClick={async () => {
                 const otpString = otp.join('');
                 if (otpString.length !== 6) {
-                  alert('Please enter the complete 6-digit OTP');
+                  toast.error('Please enter the complete 6-digit OTP');
                   return;
                 }
 
@@ -194,16 +195,17 @@ export default function OTPVerification() {
                     localStorage.removeItem('loginData');
                     
                     if (data.requiresRegistration) {
-                      alert('OTP verified. Please complete your registration.');
+                      toast.success('OTP verified. Please complete your registration.');
                       router.push('/signup');
                     } else {
+                      toast.success('Login successful!');
                       router.push('/');
                     }
                   } else {
-                    alert(data.message || 'Invalid OTP. Please try again.');
+                    toast.error(data.message || 'Invalid OTP. Please try again.');
                   }
                 } catch (error) {
-                  alert('Network error. Please check your connection and try again.');
+                  toast.error('Network error. Please check your connection and try again.');
                 } finally {
                   setIsLoading(false);
                 }

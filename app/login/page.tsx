@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { authAPI } from '../lib/api';
 
 export default function Login() {
@@ -15,7 +16,7 @@ export default function Login() {
 
   const handleSendOTP = async () => {
     if (!email.trim()) {
-      alert('Please enter your email or phone number');
+      toast.error('Please enter your email or phone number');
       return;
     }
 
@@ -25,6 +26,7 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        toast.success('OTP sent successfully!');
         // Store email/phone for OTP verification
         localStorage.setItem('loginData', JSON.stringify({
           email: email,
@@ -32,10 +34,10 @@ export default function Login() {
         }));
         router.push('/otp');
       } else {
-        alert(data.message || 'Failed to send OTP. Please try again.');
+        toast.error(data.message || 'Failed to send OTP. Please try again.');
       }
     } catch (error) {
-      alert('Network error. Please check your connection and try again.');
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
