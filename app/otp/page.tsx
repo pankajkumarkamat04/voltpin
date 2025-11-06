@@ -1,12 +1,27 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { authAPI } from '../lib/api';
 
 export default function OTPVerification() {
-  const [otp, setOtp] = useState(['6', '1', '3', '', '', '']);
-  const [email] = useState('igngloomy@gmail.com');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [email, setEmail] = useState('');
+  const [isPhoneLogin, setIsPhoneLogin] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    // Get login data from localStorage
+    const loginData = localStorage.getItem('loginData');
+    if (loginData) {
+      const parsed = JSON.parse(loginData);
+      setEmail(parsed.email);
+      setIsPhoneLogin(parsed.isPhoneLogin || false);
+    }
+  }, []);
 
   const handleOtpChange = (index: number, value: string) => {
     // Only allow single digit
@@ -54,7 +69,7 @@ export default function OTPVerification() {
       <div className="h-[50vh] min-h-[280px] bg-[#2F6BFD] flex flex-col items-center justify-start pt-8 sm:pt-12 relative px-4 overflow-hidden">
         {/* Back Button */}
         <div className="absolute top-4 left-4 z-20">
-          <Link href="/" className="text-white touch-manipulation">
+          <Link href="/login" className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -157,12 +172,47 @@ export default function OTPVerification() {
             </div>
 
             {/* Log In Button */}
-            <Link
-              href="/home"
-              className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation min-h-[48px] flex items-center justify-center"
+            <button
+              onClick={async () => {
+                const otpString = otp.join('');
+                if (otpString.length !== 6) {
+                  alert('Please enter the complete 6-digit OTP');
+                  return;
+                }
+
+                setIsLoading(true);
+                try {
+                  const response = await authAPI.verifyOTP(email, otpString, isPhoneLogin);
+                  const data = await response.json();
+
+                  if (response.ok) {
+                    // Store auth token
+                    if (data.token) {
+                      localStorage.setItem('authToken', data.token);
+                    }
+                    // Clear login data
+                    localStorage.removeItem('loginData');
+                    
+                    if (data.requiresRegistration) {
+                      alert('OTP verified. Please complete your registration.');
+                      router.push('/signup');
+                    } else {
+                      router.push('/');
+                    }
+                  } else {
+                    alert(data.message || 'Invalid OTP. Please try again.');
+                  }
+                } catch (error) {
+                  alert('Network error. Please check your connection and try again.');
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              disabled={isLoading || otp.join('').length !== 6}
+              className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Log In
-            </Link>
+              {isLoading ? 'VERIFYING...' : 'Log In'}
+            </button>
           </div>
         </div>
       </div>

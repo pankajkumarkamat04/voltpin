@@ -1,14 +1,77 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { HiPhone, HiShoppingBag, HiHome, HiPaperAirplane } from 'react-icons/hi';
 import { FiEdit2 } from 'react-icons/fi';
+import { authAPI, walletAPI, otherAPI } from '../lib/api';
 
 export default function Profile() {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await authAPI.getUserInfo();
+      const data = await response.json();
+
+      if (response.ok) {
+        const user = data.user || data.data || data;
+        setUsername(user.name || '');
+        setEmail(user.email || '');
+        setPhoneNumber(user.phoneNumber || user.phone || '');
+        setWalletBalance(user.walletBalance || 0);
+        if (user.profilePicture) {
+          setProfilePicture(user.profilePicture);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateProfile = async () => {
+    setIsUpdating(true);
+    try {
+      const response = await otherAPI.updateProfile({
+        name: username,
+        email: email,
+        phoneNumber: phoneNumber,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert('Profile updated successfully!');
+        fetchUserData();
+      } else {
+        alert(data.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      alert('An error occurred while updating profile');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    router.push('/');
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-20">
@@ -16,7 +79,7 @@ export default function Profile() {
       <div className="bg-[#2F6BFD] pb-6">
         {/* Header */}
         <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-          <Link href="/home" className="text-white touch-manipulation">
+          <Link href="/" className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -42,10 +105,10 @@ export default function Profile() {
 
             {/* User Details */}
             <div className="flex-1 pt-2">
-              <h2 className="text-black font-bold text-lg mb-2">Username</h2>
+              <h2 className="text-black font-bold text-lg mb-2">{username || 'Username'}</h2>
               <div className="flex items-center gap-2">
                 <HiPhone className="text-gray-600 text-base" />
-                <span className="text-black text-sm">+91 123456789</span>
+                <span className="text-black text-sm">{phoneNumber || '+91 123456789'}</span>
               </div>
             </div>
           </div>
@@ -69,8 +132,12 @@ export default function Profile() {
           </div>
 
           {/* Update Button */}
-          <button className="w-full bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation">
-            Update
+          <button
+            onClick={handleUpdateProfile}
+            disabled={isUpdating}
+            className="w-full bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isUpdating ? 'Updating...' : 'Update'}
           </button>
           </div>
         </div>
@@ -87,7 +154,9 @@ export default function Profile() {
               <p className="text-white text-sm">Available Balance</p>
             </div>
             <div className="bg-white rounded-full px-5 py-2.5">
-              <span className="text-[#2F6BFD] font-semibold text-sm">1000 coins</span>
+              <span className="text-[#2F6BFD] font-semibold text-sm">
+                {isLoading ? '...' : `${walletBalance} coins`}
+              </span>
             </div>
           </div>
 
@@ -102,7 +171,7 @@ export default function Profile() {
             </Link>
 
             {/* Home Button */}
-            <Link href="/home" className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/20 hover:bg-white/30 active:bg-white/30 transition-colors touch-manipulation">
+            <Link href="/" className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/20 hover:bg-white/30 active:bg-white/30 transition-colors touch-manipulation">
               <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
                 <HiHome className="text-[#2F6BFD] text-xl" />
               </div>
@@ -121,12 +190,12 @@ export default function Profile() {
 
         {/* Log Out Button */}
         <div className="px-4 pt-4">
-          <Link
-            href="/"
-            className="w-full bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation flex items-center justify-center"
+          <button
+            onClick={handleLogout}
+            className="w-full bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
           >
             Log Out
-          </Link>
+          </button>
         </div>
       </div>
     </div>

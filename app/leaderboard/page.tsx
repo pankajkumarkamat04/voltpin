@@ -1,30 +1,104 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { otherAPI } from '../lib/api';
+
+interface LeaderboardPlayer {
+  _id: string;
+  totalPurchaseAmount: number;
+  purchaseCount: number;
+  name: string;
+  email: string;
+  avatar?: string | null;
+}
+
+interface LeaderboardData {
+  currentMonth: {
+    month: string;
+    leaderboard: LeaderboardPlayer[];
+  };
+  lastMonth: {
+    month: string;
+    leaderboard: LeaderboardPlayer[];
+  };
+}
 
 export default function Leaderboard() {
-  const topThree = [
-    { rank: 2, name: 'Name', score: 1000 },
-    { rank: 1, name: 'Name', score: 1000 },
-    { rank: 3, name: 'Name', score: 1000 },
-  ];
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const rankedList = [
-    { rank: 4, name: 'Name', score: 1000 },
-    { rank: 5, name: 'Name', score: 1000 },
-    { rank: 6, name: 'Name', score: 1000 },
-    { rank: 7, name: 'Name', score: 1000 },
-    { rank: 8, name: 'Name', score: 1000 },
-    { rank: 9, name: 'Name', score: 1000 },
-    { rank: 10, name: 'Name', score: 1000 },
-    { rank: 11, name: 'Name', score: 1000 },
-  ];
+  useEffect(() => {
+    fetchLeaderboardData();
+  }, []);
+
+  const fetchLeaderboardData = async () => {
+    try {
+      setIsLoading(true);
+      const response = await otherAPI.getLeaderboard();
+      const data = await response.json();
+
+      if (response.ok && data) {
+        setLeaderboardData(data);
+      } else {
+        setError('Failed to load leaderboard data');
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      setError('Failed to load leaderboard data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get top 3 players from current month leaderboard
+  const topThreePlayers = leaderboardData?.currentMonth?.leaderboard?.slice(0, 3) || [];
+  
+  // Get remaining players (ranks 4-11) from current month leaderboard
+  const rankedPlayers = leaderboardData?.currentMonth?.leaderboard?.slice(3, 11) || [];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white pb-20">
+        <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
+          <Link href="/" className="text-white touch-manipulation">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+          <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Leaderboards</h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">Loading leaderboard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white pb-20">
+        <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
+          <Link href="/" className="text-white touch-manipulation">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+          <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Leaderboards</h1>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center text-gray-500">{error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-20">
       {/* Header */}
       <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-        <Link href="/home" className="text-white touch-manipulation">
+        <Link href="/" className="text-white touch-manipulation">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -44,9 +118,11 @@ export default function Leaderboard() {
                 <circle cx="12" cy="7" r="4" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-white text-sm font-medium mb-2">Name</span>
+            <span className="text-white text-sm font-medium mb-2">
+              {topThreePlayers[0]?.name || 'N/A'}
+            </span>
             <div className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold mb-2">
-              1000
+              ₹{topThreePlayers[0]?.totalPurchaseAmount?.toLocaleString() || '0'}
             </div>
             <div className="w-16 h-20 bg-blue-400/30 rounded-t-lg"></div>
           </div>
@@ -60,9 +136,11 @@ export default function Leaderboard() {
                 <circle cx="12" cy="7" r="4" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-white text-base font-medium mb-2">Name</span>
+            <span className="text-white text-base font-medium mb-2">
+              {topThreePlayers[1]?.name || 'N/A'}
+            </span>
             <div className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold mb-2">
-              1000
+              ₹{topThreePlayers[1]?.totalPurchaseAmount?.toLocaleString() || '0'}
             </div>
             <div className="w-20 h-28 bg-blue-400/40 rounded-t-lg"></div>
           </div>
@@ -76,9 +154,11 @@ export default function Leaderboard() {
                 <circle cx="12" cy="7" r="4" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <span className="text-white text-sm font-medium mb-2">Name</span>
+            <span className="text-white text-sm font-medium mb-2">
+              {topThreePlayers[2]?.name || 'N/A'}
+            </span>
             <div className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold mb-2">
-              1000
+              ₹{topThreePlayers[2]?.totalPurchaseAmount?.toLocaleString() || '0'}
             </div>
             <div className="w-16 h-16 bg-blue-400/30 rounded-t-lg"></div>
           </div>
@@ -88,25 +168,25 @@ export default function Leaderboard() {
       {/* Ranked List Section */}
       <div className="flex-1 bg-white px-4 py-4">
         <div className="space-y-2">
-          {rankedList.map((player) => (
+          {rankedPlayers.map((player, index) => (
             <div
-              key={player.rank}
+              key={player._id || index}
               className="bg-[#2F6BFD] rounded-xl px-4 py-3 flex items-center gap-3"
             >
               {/* Rank Number */}
-              <span className="text-white font-bold text-base">#{player.rank}</span>
+              <span className="text-white font-bold text-base">#{index + 4}</span>
               
               {/* Separator */}
               <div className="h-6 w-px bg-white"></div>
               
               {/* Name */}
               <div className="flex-1">
-                <span className="text-white font-medium text-base">Name</span>
+                <span className="text-white font-medium text-base">{player.name || 'N/A'}</span>
               </div>
               
               {/* Score Button */}
               <button className="bg-white text-[#2F6BFD] px-4 py-1.5 rounded-lg font-semibold text-sm shadow-md active:bg-gray-50 hover:bg-gray-50 transition-colors touch-manipulation">
-                1000
+                ₹{player.totalPurchaseAmount?.toLocaleString() || '0'}
               </button>
             </div>
           ))}

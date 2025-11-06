@@ -1,12 +1,73 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { walletAPI } from '../lib/api';
 
 export default function AddPoints() {
   const [amount, setAmount] = useState('');
-  const pointOptions = [250, 250, 250, 250, 250, 250];
+  const [walletBalance, setWalletBalance] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true);
+  const pointOptions = [250, 500, 1000, 1500, 2000, 2500];
+
+  useEffect(() => {
+    fetchWalletBalance();
+  }, []);
+
+  const fetchWalletBalance = async () => {
+    try {
+      setIsLoadingBalance(true);
+      const response = await walletAPI.getDashboard();
+      const data = await response.json();
+
+      if (response.ok && data.data) {
+        const balance = data.data.walletBalance || data.data.user?.walletBalance || 0;
+        setWalletBalance(typeof balance === 'number' ? balance : Number(balance) || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching wallet balance:', error);
+    } finally {
+      setIsLoadingBalance(false);
+    }
+  };
+
+  const handleAddPoints = async () => {
+    if (!amount.trim()) {
+      alert('Please enter an amount');
+      return;
+    }
+
+    const amountNumber = Number(amount);
+    if (isNaN(amountNumber) || amountNumber <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await walletAPI.addCoins(amountNumber);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        if (data.transaction?.paymentUrl) {
+          alert('Redirecting to payment...');
+          window.location.href = data.transaction.paymentUrl;
+        } else {
+          alert('Points added successfully!');
+          setAmount('');
+          fetchWalletBalance();
+        }
+      } else {
+        alert(data.message || 'Failed to add points');
+      }
+    } catch (error) {
+      alert('An error occurred while adding points');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-20">
@@ -48,7 +109,9 @@ export default function AddPoints() {
               </div>
               {/* Points Display */}
               <div className="bg-white rounded-lg px-4 py-2">
-                <span className="text-gray-800 font-semibold text-base">1000</span>
+                <span className="text-gray-800 font-semibold text-base">
+                  {isLoadingBalance ? '...' : walletBalance}
+                </span>
               </div>
             </div>
 
@@ -61,8 +124,12 @@ export default function AddPoints() {
                 onChange={(e) => setAmount(e.target.value)}
                 className="flex-1 max-w-[60%] px-2 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-sm touch-manipulation"
               />
-              <button className="bg-[#2F6BFD] text-white px-6 py-3 rounded-lg font-semibold text-sm shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation whitespace-nowrap">
-                Add Points
+              <button
+                onClick={handleAddPoints}
+                disabled={isLoading || !amount.trim()}
+                className="bg-[#2F6BFD] text-white px-6 py-3 rounded-lg font-semibold text-sm shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Processing...' : 'Add Points'}
               </button>
             </div>
           </div>

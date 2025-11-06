@@ -1,13 +1,75 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { authAPI } from '../lib/api';
 
 export default function SignUp() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginData, setLoginData] = useState<any>(null);
+
+  useEffect(() => {
+    // Get login data from localStorage (set during OTP verification)
+    const storedData = localStorage.getItem('loginData');
+    if (storedData) {
+      try {
+        const data = JSON.parse(storedData);
+        setLoginData(data);
+        if (data.email) {
+          setPhoneNumber(data.email);
+        }
+      } catch (error) {
+        console.error('Error parsing login data:', error);
+      }
+    }
+  }, []);
+
+  const handleSignUp = async () => {
+    if (!name.trim() || !phoneNumber.trim() || !password.trim()) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authAPI.completeRegistration({
+        name: name.trim(),
+        phoneNumber: phoneNumber.trim(),
+        password: password,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Store auth token if provided
+        if (data.token || data.data?.token) {
+          localStorage.setItem('authToken', data.token || data.data.token);
+        }
+        // Clear login data
+        localStorage.removeItem('loginData');
+        alert('Registration successful!');
+        router.push('/');
+      } else {
+        alert(data.message || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      alert('Network error. Please check your connection and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col font-sans overflow-hidden">
@@ -113,8 +175,12 @@ export default function SignUp() {
             </div>
 
             {/* Sign Up Button */}
-            <button className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation min-h-[48px]">
-              Sign Up Now
+            <button
+              onClick={handleSignUp}
+              disabled={isLoading || !name.trim() || !phoneNumber.trim() || !password.trim()}
+              className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Signing Up...' : 'Sign Up Now'}
             </button>
           </div>
         </div>
