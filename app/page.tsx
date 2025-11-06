@@ -1,65 +1,94 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Home() {
+  const [email, setEmail] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen flex flex-col font-sans overflow-hidden">
+      {/* Top Blue Section - 50% */}
+      <div className="h-[50vh] min-h-[280px] bg-[#2F6BFD] flex flex-col items-center justify-start pt-8 sm:pt-12 relative px-4">
+        {/* Logo */}
+        <div className="mb-4 sm:mb-6">
+          <Image
+            src="/logo.png"
+            alt="Voltpin Logo"
+            width={100}
+            height={100}
+            className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] object-contain"
+            priority
+          />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        
+        {/* Welcome Text */}
+        <div className="text-center text-white px-4">
+          <p className="text-3xl sm:text-base mb-1 sm:mb-2 font-normal">Welcome To</p>
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight">Voltpin</h1>
         </div>
-      </main>
+      </div>
+
+      {/* Bottom Light Grey Section - 50% */}
+      <div className="flex-1 bg-[#F8F8F8] relative min-h-[50vh]">
+        {/* White Card Overlay - Half on blue, half on grey */}
+        <div className="absolute top-[-100px] sm:top-[-120px] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-full max-w-md">
+          <div className="bg-white rounded-t-4xl sm:rounded-t-[2.5rem] rounded-b-3xl shadow-xl p-6 sm:p-8">
+            {/* Email Input Field */}
+            <div className="mb-5">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-4 sm:py-3.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+              />
+            </div>
+
+            {/* Remember me and Login with number */}
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+              <label className="flex items-center cursor-pointer touch-manipulation min-h-[44px]">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-5 h-5 sm:w-4 sm:h-4 border border-gray-300 rounded mr-2 text-[#2F6BFD] focus:ring-2 focus:ring-[#2F6BFD] accent-[#2F6BFD]"
+                />
+                <span className="text-gray-800 text-sm sm:text-sm">Remember me</span>
+              </label>
+              <a
+                href="#"
+                className="text-[#2F6BFD] text-sm font-medium hover:underline touch-manipulation min-h-[44px] flex items-center"
+              >
+                Login with number?
+              </a>
+            </div>
+
+            {/* Send OTP Button */}
+            <Link
+              href="/otp"
+              className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors mb-6 touch-manipulation min-h-[48px] flex items-center justify-center"
+            >
+              Send OTP
+            </Link>
+
+            {/* Sign Up Link */}
+            <div className="text-center">
+              <p className="text-xs text-gray-800">
+                Don't have an account?{' '}
+                <a
+                  href="/signup"
+                  className="text-[#2F6BFD] font-medium hover:underline touch-manipulation inline-flex items-center min-h-[44px]"
+                >
+                  Sign Up
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

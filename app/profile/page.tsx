@@ -1,0 +1,135 @@
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { HiPhone, HiShoppingBag, HiHome, HiPaperAirplane } from 'react-icons/hi';
+import { FiEdit2 } from 'react-icons/fi';
+
+export default function Profile() {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white pb-20">
+      {/* Blue Background Section - Header and User Details */}
+      <div className="bg-[#2F6BFD] pb-6">
+        {/* Header */}
+        <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
+          <Link href="/home" className="text-white touch-manipulation">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </Link>
+          <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">User Profile</h1>
+        </header>
+
+        {/* First White Card - User Profile Information */}
+        <div className="px-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+          {/* Profile Picture Section */}
+          <div className="flex items-start gap-4 mb-6">
+            {/* Profile Picture with Edit Icon */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 rounded-full bg-[#2F6BFD] border-2 border-white flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-3xl">U</span>
+              </div>
+              {/* Edit Icon Overlay */}
+              <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center shadow-sm">
+                <FiEdit2 className="text-gray-700 text-xs" />
+              </div>
+            </div>
+
+            {/* User Details */}
+            <div className="flex-1 pt-2">
+              <h2 className="text-black font-bold text-lg mb-2">Username</h2>
+              <div className="flex items-center gap-2">
+                <HiPhone className="text-gray-600 text-base" />
+                <span className="text-black text-sm">+91 123456789</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Input Fields */}
+          <div className="space-y-4 mb-6">
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-sm touch-manipulation"
+            />
+            <input
+              type="email"
+              placeholder="user@gmail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-sm touch-manipulation"
+            />
+          </div>
+
+          {/* Update Button */}
+          <button className="w-full bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation">
+            Update
+          </button>
+          </div>
+        </div>
+      </div>
+
+      {/* White Background Section - Rest of Content */}
+      <div className="flex-1 px-4 py-6 space-y-4">
+        {/* Combined Blue Card - Volt Points Balance & Navigation/Action Buttons */}
+        <div className="bg-[#2F6BFD] rounded-2xl shadow-lg p-4 space-y-4">
+          {/* Volt Points Balance Section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-white font-bold text-base mb-1">Volt Points</h3>
+              <p className="text-white text-sm">Available Balance</p>
+            </div>
+            <div className="bg-white rounded-full px-5 py-2.5">
+              <span className="text-[#2F6BFD] font-semibold text-sm">1000 coins</span>
+            </div>
+          </div>
+
+          {/* Navigation/Action Buttons Section */}
+          <div className="flex items-center justify-between gap-3">
+            {/* Orders Button */}
+            <Link href="/history" className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/20 hover:bg-white/30 active:bg-white/30 transition-colors touch-manipulation">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
+                <HiShoppingBag className="text-[#2F6BFD] text-xl" />
+              </div>
+              <span className="text-white font-medium text-sm">Orders</span>
+            </Link>
+
+            {/* Home Button */}
+            <Link href="/home" className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/20 hover:bg-white/30 active:bg-white/30 transition-colors touch-manipulation">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
+                <HiHome className="text-[#2F6BFD] text-xl" />
+              </div>
+              <span className="text-white font-medium text-sm">Home</span>
+            </Link>
+
+            {/* Contact Button */}
+            <Link href="/social" className="flex-1 flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/20 hover:bg-white/30 active:bg-white/30 transition-colors touch-manipulation">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-md">
+                <HiPaperAirplane className="text-[#2F6BFD] text-xl" />
+              </div>
+              <span className="text-white font-medium text-sm">Contact</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Log Out Button */}
+        <div className="px-4 pt-4">
+          <Link
+            href="/"
+            className="w-full bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation flex items-center justify-center"
+          >
+            Log Out
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
