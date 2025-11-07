@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://api.leafstore.in/api/v1';
+const API_BASE_URL = 'https://api.voltpin.in/api/v1';
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {

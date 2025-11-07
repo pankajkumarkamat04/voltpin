@@ -160,7 +160,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
     try {
       const redirectUrl = typeof window !== 'undefined' 
         ? `${window.location.origin}/payment-status`
-        : 'https://leafstore.in/payment-status';
+        : 'https://voltpin.in/payment-status';
 
       const response = await orderAPI.createOrderWithUPI({
         diamondPackId: selectedPackage._id,

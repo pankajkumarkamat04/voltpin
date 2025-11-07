@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'api.voltpin.in',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'api.voltpin.in',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'api.leafstore.in',
         pathname: '/**',
       },
@@ -61,6 +71,16 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: 'api.zorotopup.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'voltpin.in',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.voltpin.in',
         pathname: '/**',
       },
       {
