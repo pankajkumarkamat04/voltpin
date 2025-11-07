@@ -10,10 +10,12 @@ import { authAPI } from '../lib/api';
 export default function SignUp() {
   const router = useRouter();
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState<any>(null);
+  const [isPhoneLogin, setIsPhoneLogin] = useState(false);
 
   useEffect(() => {
     // Get login data from localStorage (set during OTP verification)
@@ -22,8 +24,16 @@ export default function SignUp() {
       try {
         const data = JSON.parse(storedData);
         setLoginData(data);
+        setIsPhoneLogin(data.isPhoneLogin || false);
+        
         if (data.email) {
-          setPhoneNumber(data.email);
+          // Pre-fill the appropriate field based on login method
+          // Both fields will be shown, but login input will pre-fill one of them
+          if (data.isPhoneLogin) {
+            setPhoneNumber(data.email);
+          } else {
+            setEmail(data.email);
+          }
         }
       } catch (error) {
         console.error('Error parsing login data:', error);
@@ -32,8 +42,16 @@ export default function SignUp() {
   }, []);
 
   const handleSignUp = async () => {
-    if (!name.trim() || !phoneNumber.trim() || !password.trim()) {
+    // Validate all fields are filled
+    if (!name.trim() || !email.trim() || !phoneNumber.trim() || !password.trim()) {
       toast.error('Please fill in all fields');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      toast.error('Please enter a valid email address');
       return;
     }
 
@@ -44,11 +62,15 @@ export default function SignUp() {
 
     setIsLoading(true);
     try {
-      const response = await authAPI.completeRegistration({
+      // Build registration payload - always include all fields
+      const registrationData: any = {
         name: name.trim(),
-        phoneNumber: phoneNumber.trim(),
+        email: email.trim(),
+        phone: phoneNumber.trim(),
         password: password,
-      });
+      };
+
+      const response = await authAPI.completeRegistration(registrationData);
 
       const data = await response.json();
 
@@ -146,6 +168,20 @@ export default function SignUp() {
               />
             </div>
 
+            {/* Email Input Field */}
+            <div className="mb-5">
+              <label className="block text-gray-800 text-sm font-medium mb-2">
+                Enter your email
+              </label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-4 sm:py-3.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+              />
+            </div>
+
             {/* Phone Number Input Field */}
             <div className="mb-5">
               <label className="block text-gray-800 text-sm font-medium mb-2">
@@ -177,7 +213,13 @@ export default function SignUp() {
             {/* Sign Up Button */}
             <button
               onClick={handleSignUp}
-              disabled={isLoading || !name.trim() || !phoneNumber.trim() || !password.trim()}
+              disabled={
+                isLoading || 
+                !name.trim() || 
+                !email.trim() || 
+                !phoneNumber.trim() || 
+                !password.trim()
+              }
               className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Signing Up...' : 'Sign Up Now'}

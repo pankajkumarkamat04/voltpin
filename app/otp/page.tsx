@@ -154,7 +154,7 @@ export default function OTPVerification() {
                   onChange={(e) => handleOtpChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-10 h-14 sm:w-12 sm:h-16 text-center text-2xl sm:text-3xl font-bold border-b-2 border-gray-300 focus:border-[#2F6BFD] focus:outline-none transition-colors touch-manipulation"
+                  className="w-10 h-14 sm:w-12 sm:h-16 text-center text-2xl sm:text-3xl font-bold border-b-2 border-gray-300 focus:border-[#2F6BFD] focus:outline-none transition-colors touch-manipulation text-black"
                 />
               ))}
             </div>
@@ -191,13 +191,14 @@ export default function OTPVerification() {
                     if (data.token) {
                       localStorage.setItem('authToken', data.token);
                     }
-                    // Clear login data
-                    localStorage.removeItem('loginData');
                     
                     if (data.requiresRegistration) {
+                      // Keep loginData for registration page - it will be cleared after successful registration
                       toast.success('OTP verified. Please complete your registration.');
                       router.push('/signup');
                     } else {
+                      // Clear login data only if registration is not required
+                      localStorage.removeItem('loginData');
                       toast.success('Login successful!');
                       router.push('/');
                     }
