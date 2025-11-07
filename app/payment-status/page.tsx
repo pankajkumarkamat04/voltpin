@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { HiMenu, HiUser } from 'react-icons/hi';
 import { HiCheck, HiX } from 'react-icons/hi';
 import { transactionAPI } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 function PaymentStatusContent() {
   const searchParams = useSearchParams();
@@ -217,13 +218,15 @@ function PaymentStatusContent() {
 
 export default function PaymentStatus() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    }>
-      <PaymentStatusContent />
-    </Suspense>
+    <ProtectedRoute>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center bg-white">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      }>
+        <PaymentStatusContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
 

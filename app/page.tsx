@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { HiPlus, HiShoppingBag, HiChartBar, HiPaperAirplane, HiUser } from 'react-icons/hi';
 import BottomNav from './components/BottomNav';
-import ProtectedRoute from './components/ProtectedRoute';
 import { gameAPI, walletAPI, authAPI } from './lib/api';
 
 function HomeContent() {
@@ -21,11 +20,20 @@ function HomeContent() {
   const [isLoadingBalance, setIsLoadingBalance] = useState(true);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    // Check if user is authenticated
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    setIsAuthenticated(!!token);
+    
     fetchGames();
-    fetchWalletBalance();
-    fetchUserInfo();
+    if (token) {
+      fetchWalletBalance();
+      fetchUserInfo();
+    } else {
+      setIsLoadingBalance(false);
+    }
   }, []);
 
   // Close filter dropdown when clicking outside
@@ -64,17 +72,25 @@ function HomeContent() {
   const fetchWalletBalance = async () => {
     try {
       setIsLoadingBalance(true);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      if (!token) {
+        setIsLoadingBalance(false);
+        return;
+      }
       const response = await walletAPI.getDashboard();
       const data = await response.json();
       if (response.ok && data.data) {
         const balance = data.data.walletBalance || data.data.user?.walletBalance || 0;
         setWalletBalance(typeof balance === 'number' ? balance : Number(balance) || 0);
       } else {
-        toast.error('Failed to load wallet balance.');
+        // Silently fail if not authenticated
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          localStorage.removeItem('authToken');
+        }
       }
     } catch (error) {
       console.error('Error fetching wallet balance:', error);
-      toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoadingBalance(false);
     }
@@ -82,23 +98,34 @@ function HomeContent() {
 
   const fetchUserInfo = async () => {
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+      if (!token) {
+        return;
+      }
       const response = await authAPI.getUserInfo();
       const data = await response.json();
       if (response.ok) {
         const user = data.user || data.data || data;
         setUsername(user.name || 'Username');
+        setIsAuthenticated(true);
       } else {
-        toast.error('Failed to load user information.');
+        // Silently fail if not authenticated
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          localStorage.removeItem('authToken');
+        }
       }
     } catch (error) {
       console.error('Error fetching user info:', error);
-      toast.error('Network error. Please check your connection.');
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
-    router.push('/login');
+    setIsAuthenticated(false);
+    setWalletBalance(0);
+    setUsername('Username');
+    setIsMenuOpen(false);
   };
 
   // Filter games based on search query and selected filter
@@ -131,7 +158,9 @@ function HomeContent() {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
             <p className="text-gray-900 font-bold text-lg mb-1">Welcome</p>
-            <p className="text-[#2F6BFD] font-bold text-xl">{username}</p>
+            <p className="text-[#2F6BFD] font-bold text-xl">
+              {isAuthenticated ? username : 'Guest'}
+            </p>
           </div>
           <button
             onClick={() => setIsMenuOpen(false)}
@@ -225,14 +254,24 @@ function HomeContent() {
           ))}
         </div>
 
-        {/* Log Out Button */}
+        {/* Log Out/Login Button */}
         <div className="p-6 border-t border-gray-200">
-          <button 
-            onClick={handleLogout}
-            className="w-full bg-gradient-to-r from-[#2F6BFD] to-[#2563eb] text-white py-3.5 rounded-xl font-semibold text-base shadow-md active:opacity-90 transition-opacity touch-manipulation"
-          >
-            Log Out
-          </button>
+          {isAuthenticated ? (
+            <button 
+              onClick={handleLogout}
+              className="w-full bg-gradient-to-r from-[#2F6BFD] to-[#2563eb] text-white py-3.5 rounded-xl font-semibold text-base shadow-md active:opacity-90 transition-opacity touch-manipulation"
+            >
+              Log Out
+            </button>
+          ) : (
+            <Link 
+              href="/login"
+              onClick={() => setIsMenuOpen(false)}
+              className="w-full bg-gradient-to-r from-[#2F6BFD] to-[#2563eb] text-white py-3.5 rounded-xl font-semibold text-base shadow-md active:opacity-90 transition-opacity touch-manipulation flex items-center justify-center"
+            >
+              Log In
+            </Link>
+          )}
         </div>
       </div>
       {/* Top Header Bar */}
@@ -261,23 +300,31 @@ function HomeContent() {
 
         {/* Points and Profile - Right */}
         <div className="flex items-center gap-2">
-          {/* Points Button */}
-          <Link href="/add-points" className="bg-white hover:bg-gray-50 rounded-full px-3 py-1.5 flex items-center gap-1.5 touch-manipulation shadow-md">
-            <Image
-              src="/coin.png"
-              alt="Coin"
-              width={16}
-              height={16}
-              className="w-4 h-4 object-contain"
-            />
-            <span className="text-gray-900 font-semibold text-sm">
-              {isLoadingBalance ? '...' : walletBalance}
-            </span>
-          </Link>
-          {/* Profile Icon */}
-          <Link href="/profile" className="text-white touch-manipulation">
-            <HiUser className="w-6 h-6" />
-          </Link>
+          {/* Points Button - Only show if authenticated */}
+          {isAuthenticated ? (
+            <>
+              <Link href="/add-points" className="bg-white hover:bg-gray-50 rounded-full px-3 py-1.5 flex items-center gap-1.5 touch-manipulation shadow-md">
+                <Image
+                  src="/coin.png"
+                  alt="Coin"
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 object-contain"
+                />
+                <span className="text-gray-900 font-semibold text-sm">
+                  {isLoadingBalance ? '...' : walletBalance}
+                </span>
+              </Link>
+              {/* Profile Icon */}
+              <Link href="/profile" className="text-white touch-manipulation">
+                <HiUser className="w-6 h-6" />
+              </Link>
+            </>
+          ) : (
+            <Link href="/login" className="bg-white hover:bg-gray-50 rounded-full px-3 py-1.5 flex items-center gap-1.5 touch-manipulation shadow-md">
+              <span className="text-gray-900 font-semibold text-sm">Login</span>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -427,9 +474,5 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return (
-    <ProtectedRoute>
-      <HomeContent />
-    </ProtectedRoute>
-  );
+  return <HomeContent />;
 }

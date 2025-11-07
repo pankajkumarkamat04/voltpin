@@ -5,8 +5,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { walletAPI } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-export default function AddPoints() {
+function AddPointsContent() {
   const [amount, setAmount] = useState('');
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -166,6 +167,14 @@ export default function AddPoints() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddPoints() {
+  return (
+    <ProtectedRoute>
+      <AddPointsContent />
+    </ProtectedRoute>
   );
 }
 

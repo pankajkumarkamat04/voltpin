@@ -8,8 +8,9 @@ import toast from 'react-hot-toast';
 import { HiPhone, HiShoppingBag, HiHome, HiPaperAirplane } from 'react-icons/hi';
 import { FiEdit2 } from 'react-icons/fi';
 import { authAPI, walletAPI, otherAPI } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-export default function Profile() {
+function ProfileContent() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -200,6 +201,14 @@ export default function Profile() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Profile() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
   );
 }
 

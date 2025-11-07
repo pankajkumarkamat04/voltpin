@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { otherAPI } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 interface LeaderboardPlayer {
   _id: string;
@@ -25,7 +26,7 @@ interface LeaderboardData {
   };
 }
 
-export default function Leaderboard() {
+function LeaderboardContent() {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -198,6 +199,14 @@ export default function Leaderboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Leaderboard() {
+  return (
+    <ProtectedRoute>
+      <LeaderboardContent />
+    </ProtectedRoute>
   );
 }
 

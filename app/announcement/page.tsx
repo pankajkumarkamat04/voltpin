@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { HiSpeakerphone } from 'react-icons/hi';
 import { HiChevronDown } from 'react-icons/hi';
 import { otherAPI } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 interface Announcement {
   _id: string;
@@ -16,7 +17,7 @@ interface Announcement {
   updatedAt: string;
 }
 
-export default function Announcement() {
+function AnnouncementContent() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +153,14 @@ export default function Announcement() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Announcement() {
+  return (
+    <ProtectedRoute>
+      <AnnouncementContent />
+    </ProtectedRoute>
   );
 }
 

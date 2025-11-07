@@ -5,8 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { orderAPI, transactionAPI, walletAPI } from '../lib/api';
+import ProtectedRoute from '../components/ProtectedRoute';
 
-export default function History() {
+function HistoryContent() {
   const [activeTab, setActiveTab] = useState('order');
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
@@ -564,6 +565,14 @@ export default function History() {
         </>
       )}
     </div>
+  );
+}
+
+export default function History() {
+  return (
+    <ProtectedRoute>
+      <HistoryContent />
+    </ProtectedRoute>
   );
 }
 
