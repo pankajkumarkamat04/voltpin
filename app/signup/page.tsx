@@ -74,7 +74,9 @@ export default function SignUp() {
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      // Check if response is successful
+      if (response.ok) {
+        // Successful registration - show success toast
         // Store auth token if provided
         if (data.token || data.data?.token) {
           localStorage.setItem('authToken', data.token || data.data.token);
@@ -82,9 +84,13 @@ export default function SignUp() {
         // Clear login data
         localStorage.removeItem('loginData');
         toast.success('Registration successful!');
-        router.push('/');
+        // Small delay before redirect to ensure toast is visible
+        setTimeout(() => {
+          router.push('/');
+        }, 500);
       } else {
-        toast.error(data.message || 'Registration failed. Please try again.');
+        // HTTP error status - show error toast
+        toast.error(data.message || data.error || 'Registration failed. Please try again.');
       }
     } catch (error) {
       toast.error('Network error. Please check your connection and try again.');
