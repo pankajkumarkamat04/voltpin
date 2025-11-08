@@ -40,6 +40,26 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
     }
   }, [showPaymentOptions]);
 
+  const ensureAuthenticated = (): boolean => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+      toast.error('Please log in to continue checkout.');
+      try {
+        const redirectPath = `${window.location.pathname}${window.location.search}`;
+        localStorage.setItem('intendedPath', redirectPath || '/');
+      } catch {}
+      router.push('/login');
+      return false;
+    }
+
+    return true;
+  };
+
   const fetchDiamondPacks = async () => {
     try {
       setIsLoading(true);
@@ -59,6 +79,13 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
 
   const fetchWalletBalance = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          setWalletBalance(0);
+          return;
+        }
+      }
       const response = await walletAPI.getDashboard();
       const data = await response.json();
 
@@ -111,12 +138,19 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       return;
     }
     setSelectedPackage(pkg);
+    if (!ensureAuthenticated()) {
+      return;
+    }
     setShowPaymentOptions(true);
   };
 
   const processWalletPayment = async () => {
     if (!selectedPackage) {
       toast.error('No package selected');
+      return;
+    }
+
+    if (!ensureAuthenticated()) {
       return;
     }
 
@@ -153,6 +187,10 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   const processUPIPayment = async () => {
     if (!selectedPackage) {
       toast.error('No package selected');
+      return;
+    }
+
+    if (!ensureAuthenticated()) {
       return;
     }
 

@@ -3,7 +3,6 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Checkout from '../components/Checkout';
-import ProtectedRoute from '../components/ProtectedRoute';
 
 function TopupContent() {
   const searchParams = useSearchParams();
@@ -18,15 +17,13 @@ function TopupContent() {
 
 export default function Topup() {
   return (
-    <ProtectedRoute>
-      <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white">
-          <div className="text-gray-500">Loading...</div>
-        </div>
-      }>
-        <TopupContent />
-      </Suspense>
-    </ProtectedRoute>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    }>
+      <TopupContent />
+    </Suspense>
   );
 }
 
