@@ -368,11 +368,13 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                   gameData.validationFields.map((field: string) => {
                     const fieldValue = validationFields[field] || '';
                     const fieldLabel = getFieldLabel(field);
-                    const isServerField = field.toLowerCase() === 'server';
+                    const fieldLower = field.toLowerCase();
+                    // Check if field is server/zone related (server, zone, zoneId, serverId, etc.)
+                    const isServerRelatedField = fieldLower.includes('server') || fieldLower.includes('zone') || fieldLower === 'region';
                     const regionList = gameData?.regionList || [];
 
-                    // If it's a server field and regionList exists, show dropdown
-                    if (isServerField && regionList.length > 0) {
+                    // If it's a server/zone related field and regionList exists, show dropdown
+                    if (isServerRelatedField && regionList.length > 0) {
                       return (
                         <select
                           key={field}
@@ -412,13 +414,29 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                       onChange={(e) => updateValidationField('playerId', e.target.value)}
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
                     />
-                    <input
-                      type="text"
-                      placeholder="SERVER"
-                      value={validationFields.server || ''}
-                      onChange={(e) => updateValidationField('server', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
-                    />
+                    {/* Show dropdown for server if regionList exists, otherwise text input */}
+                    {gameData?.regionList && Array.isArray(gameData.regionList) && gameData.regionList.length > 0 ? (
+                      <select
+                        value={validationFields.server || ''}
+                        onChange={(e) => updateValidationField('server', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 text-base touch-manipulation bg-white"
+                      >
+                        <option value="">Select Server</option>
+                        {gameData.regionList.map((region: any) => (
+                          <option key={region.code} value={region.code}>
+                            {region.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="SERVER"
+                        value={validationFields.server || ''}
+                        onChange={(e) => updateValidationField('server', e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                      />
+                    )}
                   </>
                 )}
               </div>
@@ -580,9 +598,12 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                       gameData.validationFields.map((field: string) => {
                         const fieldValue = validationFields[field] || '---';
                         const fieldLabel = getFieldLabel(field);
-                        // Get region name if it's a server field and value matches a region code
+                        const fieldLower = field.toLowerCase();
+                        // Check if field is server/zone related
+                        const isServerRelatedField = fieldLower.includes('server') || fieldLower.includes('zone') || fieldLower === 'region';
+                        // Get region name if it's a server-related field and value matches a region code
                         let displayValue = fieldValue;
-                        if (field.toLowerCase() === 'server' && gameData?.regionList) {
+                        if (isServerRelatedField && gameData?.regionList && Array.isArray(gameData.regionList)) {
                           const region = gameData.regionList.find((r: any) => r.code === fieldValue);
                           displayValue = region ? region.name : fieldValue;
                         }
@@ -601,7 +622,16 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                         </div>
                         <div className="mb-1">
                           <span className="text-xs opacity-90">Server:</span>
-                          <span className="ml-2 font-semibold text-sm">{validationFields.server || '---'}</span>
+                          <span className="ml-2 font-semibold text-sm">
+                            {gameData?.regionList && Array.isArray(gameData.regionList) ? (
+                              (() => {
+                                const region = gameData.regionList.find((r: any) => r.code === validationFields.server);
+                                return region ? region.name : (validationFields.server || '---');
+                              })()
+                            ) : (
+                              validationFields.server || '---'
+                            )}
+                          </span>
                         </div>
                       </>
                     )}
