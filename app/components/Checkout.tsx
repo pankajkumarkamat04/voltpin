@@ -13,8 +13,7 @@ interface CheckoutProps {
 
 export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps = {}) {
   const router = useRouter();
-  const [userId, setUserId] = useState('');
-  const [zoneId, setZoneId] = useState('');
+  const [validationFields, setValidationFields] = useState<Record<string, string>>({});
   const [selectedCurrency, setSelectedCurrency] = useState('diamonds');
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [couponCode, setCouponCode] = useState('');
@@ -39,6 +38,70 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       fetchWalletBalance();
     }
   }, [showPaymentOptions]);
+
+  // Helper function to format field name to display label
+  const getFieldLabel = (fieldName: string): string => {
+    const labelMap: Record<string, string> = {
+      playerId: 'Player ID',
+      userId: 'User ID',
+      server: 'Server',
+      zoneId: 'Zone ID',
+      zone: 'Zone',
+    };
+    
+    if (labelMap[fieldName]) {
+      return labelMap[fieldName];
+    }
+    
+    // Convert camelCase to Title Case
+    return fieldName
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (str) => str.toUpperCase())
+      .trim();
+  };
+
+  // Helper function to update validation field
+  const updateValidationField = (fieldName: string, value: string) => {
+    setValidationFields((prev) => ({
+      ...prev,
+      [fieldName]: value,
+    }));
+  };
+
+  // Helper function to map validation fields to API parameters (playerId and server)
+  const mapValidationFieldsToAPI = () => {
+    const fieldsList = gameData?.validationFields || ['playerId', 'server'];
+    let playerId = '';
+    let server = '';
+    
+    // Find playerId field - prioritize fields with 'player' or 'user' in name
+    for (const field of fieldsList) {
+      const fieldLower = field.toLowerCase();
+      if (fieldLower.includes('player') || fieldLower.includes('user') || fieldLower === 'playerid' || fieldLower === 'userid') {
+        playerId = validationFields[field] || '';
+        break;
+      }
+    }
+    // If no player/user field found, use first field
+    if (!playerId && fieldsList.length > 0) {
+      playerId = validationFields[fieldsList[0]] || '';
+    }
+    
+    // Find server field - prioritize fields with 'server' or 'zone' in name
+    for (const field of fieldsList) {
+      const fieldLower = field.toLowerCase();
+      if (fieldLower.includes('server') || fieldLower.includes('zone') || fieldLower === 'serverid' || fieldLower === 'zoneid') {
+        server = validationFields[field] || '';
+        break;
+      }
+    }
+    // If no server/zone field found, use second field or last field
+    if (!server && fieldsList.length > 1) {
+      server = validationFields[fieldsList[1]] || validationFields[fieldsList[fieldsList.length - 1]] || '';
+    }
+    
+    return { playerId, server };
+  };
 
   const ensureAuthenticated = (): boolean => {
     if (typeof window === 'undefined') {
@@ -69,6 +132,18 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       if (response.ok && data.success) {
         setGameData(data.gameData);
         setPackages(data.diamondPacks || []);
+        
+        // Initialize validation fields based on gameData.validationFields
+        if (data.gameData?.validationFields && Array.isArray(data.gameData.validationFields)) {
+          const initialFields: Record<string, string> = {};
+          data.gameData.validationFields.forEach((field: string) => {
+            initialFields[field] = '';
+          });
+          setValidationFields(initialFields);
+        } else {
+          // Fallback to default fields if validationFields is not available
+          setValidationFields({ playerId: '', server: '' });
+        }
       }
     } catch (error) {
       console.error('Error fetching diamond packs:', error);
@@ -99,18 +174,27 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   };
 
   const handleValidate = async () => {
-    if (!userId.trim()) {
-      toast.error('Please enter your User ID');
-      return;
+    // Validate all required fields
+    const validationFieldsList = gameData?.validationFields || ['playerId', 'server'];
+    for (const field of validationFieldsList) {
+      if (!validationFields[field]?.trim()) {
+        const fieldLabel = getFieldLabel(field);
+        toast.error(`Please enter your ${fieldLabel}`);
+        return;
+      }
     }
-    if (!zoneId.trim()) {
-      toast.error('Please enter your Zone ID');
+
+    // Map validation fields to API parameters
+    const { playerId, server: serverId } = mapValidationFieldsToAPI();
+
+    if (!playerId || !serverId) {
+      toast.error('Please fill all required fields');
       return;
     }
 
     setIsValidating(true);
     try {
-      const response = await gameAPI.validateUser(gameId, userId, zoneId);
+      const response = await gameAPI.validateUser(gameId, playerId, serverId);
       const data = await response.json();
 
       if (response.ok && data.response) {
@@ -122,7 +206,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
           });
         }
       } else {
-        toast.error(data.data?.msg || 'Invalid ID or Server');
+        toast.error(data.data?.msg || 'Invalid information provided');
         setValidatedInfo(null);
       }
     } catch (error) {
@@ -133,10 +217,20 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   };
 
   const handlePackageSelect = (pkg: any) => {
-    if (!userId || !zoneId) {
-      toast.error('Please validate your User ID and Zone ID first');
+    // Validate all required fields are filled
+    const validationFieldsList = gameData?.validationFields || ['playerId', 'server'];
+    const allFieldsFilled = validationFieldsList.every((field: string) => validationFields[field]?.trim());
+    
+    if (!allFieldsFilled) {
+      toast.error('Please fill all required fields and validate first');
       return;
     }
+    
+    if (!validatedInfo) {
+      toast.error('Please validate your information first');
+      return;
+    }
+    
     setSelectedPackage(pkg);
     if (!ensureAuthenticated()) {
       return;
@@ -161,10 +255,13 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
 
     setIsProcessingPayment(true);
     try {
+      // Map dynamic validation fields to API parameters
+      const { playerId, server } = mapValidationFieldsToAPI();
+      
       const response = await orderAPI.createOrderWithWallet({
         diamondPackId: selectedPackage._id,
-        playerId: userId,
-        server: zoneId,
+        playerId: playerId,
+        server: server,
         quantity: 1
       });
 
@@ -200,10 +297,13 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
         ? `${window.location.origin}/payment-status`
         : 'https://voltpin.in/payment-status';
 
+      // Map dynamic validation fields to API parameters
+      const { playerId, server } = mapValidationFieldsToAPI();
+
       const response = await orderAPI.createOrderWithUPI({
         diamondPackId: selectedPackage._id,
-        playerId: userId,
-        server: zoneId,
+        playerId: playerId,
+        server: server,
         amount: selectedPackage.amount,
         quantity: 1,
         redirectUrl
@@ -243,11 +343,14 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
             <div className="flex items-center gap-4">
               <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0">
                 <Image
-                  src="/game.jpg"
-                  alt="Mobile Legends"
+                  src={gameData?.image || "/game.jpg"}
+                  alt={gameData?.name || "Game"}
                   width={80}
                   height={80}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/game.jpg";
+                  }}
                 />
               </div>
               <h2 className="text-gray-900 font-bold text-xl">{gameData?.name || 'Mobile Legends'}</h2>
@@ -261,20 +364,63 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
             <div className="px-4 pt-4 pb-4">
               <h3 className="text-gray-900 font-semibold text-base mb-4">Enter User Information</h3>
               <div className="space-y-3 mb-4">
-                <input
-                  type="text"
-                  placeholder="USER ID"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
-                />
-                <input
-                  type="text"
-                  placeholder="ZONE ID"
-                  value={zoneId}
-                  onChange={(e) => setZoneId(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
-                />
+                {gameData?.validationFields && Array.isArray(gameData.validationFields) && gameData.validationFields.length > 0 ? (
+                  gameData.validationFields.map((field: string) => {
+                    const fieldValue = validationFields[field] || '';
+                    const fieldLabel = getFieldLabel(field);
+                    const isServerField = field.toLowerCase() === 'server';
+                    const regionList = gameData?.regionList || [];
+
+                    // If it's a server field and regionList exists, show dropdown
+                    if (isServerField && regionList.length > 0) {
+                      return (
+                        <select
+                          key={field}
+                          value={fieldValue}
+                          onChange={(e) => updateValidationField(field, e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 text-base touch-manipulation bg-white"
+                        >
+                          <option value="">Select {fieldLabel}</option>
+                          {regionList.map((region: any) => (
+                            <option key={region.code} value={region.code}>
+                              {region.name}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    }
+
+                    // Otherwise, show text input
+                    return (
+                      <input
+                        key={field}
+                        type="text"
+                        placeholder={fieldLabel.toUpperCase()}
+                        value={fieldValue}
+                        onChange={(e) => updateValidationField(field, e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                      />
+                    );
+                  })
+                ) : (
+                  // Fallback to default fields if validationFields is not available
+                  <>
+                    <input
+                      type="text"
+                      placeholder="PLAYER ID"
+                      value={validationFields.playerId || ''}
+                      onChange={(e) => updateValidationField('playerId', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                    />
+                    <input
+                      type="text"
+                      placeholder="SERVER"
+                      value={validationFields.server || ''}
+                      onChange={(e) => updateValidationField('server', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                    />
+                  </>
+                )}
               </div>
               <button
                 onClick={handleValidate}
@@ -429,14 +575,36 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                       <span className="text-xs opacity-90">Amount:</span>
                       <span className="ml-2 font-semibold text-sm">₹{selectedPackage?.amount || '---'}</span>
                     </div>
-                    <div className="mb-1">
-                      <span className="text-xs opacity-90">User ID:</span>
-                      <span className="ml-2 font-semibold text-sm">{userId || '---'}</span>
-                    </div>
-                    <div className="mb-1">
-                      <span className="text-xs opacity-90">Zone ID:</span>
-                      <span className="ml-2 font-semibold text-sm">{zoneId || '---'}</span>
-                    </div>
+                    {/* Dynamically display validation fields */}
+                    {gameData?.validationFields && Array.isArray(gameData.validationFields) ? (
+                      gameData.validationFields.map((field: string) => {
+                        const fieldValue = validationFields[field] || '---';
+                        const fieldLabel = getFieldLabel(field);
+                        // Get region name if it's a server field and value matches a region code
+                        let displayValue = fieldValue;
+                        if (field.toLowerCase() === 'server' && gameData?.regionList) {
+                          const region = gameData.regionList.find((r: any) => r.code === fieldValue);
+                          displayValue = region ? region.name : fieldValue;
+                        }
+                        return (
+                          <div key={field} className="mb-1">
+                            <span className="text-xs opacity-90">{fieldLabel}:</span>
+                            <span className="ml-2 font-semibold text-sm">{displayValue}</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <>
+                        <div className="mb-1">
+                          <span className="text-xs opacity-90">Player ID:</span>
+                          <span className="ml-2 font-semibold text-sm">{validationFields.playerId || '---'}</span>
+                        </div>
+                        <div className="mb-1">
+                          <span className="text-xs opacity-90">Server:</span>
+                          <span className="ml-2 font-semibold text-sm">{validationFields.server || '---'}</span>
+                        </div>
+                      </>
+                    )}
                     <div>
                       <span className="text-xs opacity-90">IGN:</span>
                       <span className="ml-2 font-semibold text-sm">{validatedInfo?.nickname || '---'}</span>
