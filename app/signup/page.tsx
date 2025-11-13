@@ -100,7 +100,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans overflow-hidden">
+    <div className="min-h-screen flex flex-col font-sans bg-[#F8F8F8]">
       {/* Top Blue Section - 50% */}
       <div className="h-[50vh] min-h-[280px] bg-[#2F6BFD] flex flex-col items-center justify-start pt-8 sm:pt-12 relative px-4">
         {/* Back Button */}
@@ -156,10 +156,10 @@ export default function SignUp() {
       </div>
 
       {/* Bottom Light Grey Section - 50% */}
-      <div className="flex-1 bg-[#F8F8F8] relative min-h-[50vh]">
+      <div className="flex-1 bg-[#F8F8F8] relative pb-60 sm:pb-40 min-h-[60vh]">
         {/* White Card Overlay - Half on blue, half on grey */}
-        <div className="absolute top-[-100px] sm:top-[-120px] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-full max-w-md">
-          <div className="bg-white rounded-t-4xl sm:rounded-t-[2.5rem] rounded-b-3xl shadow-xl p-6 sm:p-8">
+        <div className="absolute top-[-100px] sm:top-[-120px] md:top-[-140px] lg:top-[-160px] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-full max-w-md">
+          <div className="bg-white rounded-t-4xl sm:rounded-t-[2.5rem] rounded-b-3xl shadow-xl p-6 sm:p-8 mb-8">
             {/* Name Input Field */}
             <div className="mb-5">
               <label className="block text-gray-800 text-sm font-medium mb-2">
@@ -232,6 +232,8 @@ export default function SignUp() {
             </button>
           </div>
         </div>
+        {/* Extra spacing at bottom to prevent black background */}
+        <div className="h-40 sm:h-32 bg-[#F8F8F8]"></div>
       </div>
     </div>
   );

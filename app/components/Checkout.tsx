@@ -15,6 +15,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   const router = useRouter();
   const [validationFields, setValidationFields] = useState<Record<string, string>>({});
   const [selectedCurrency, setSelectedCurrency] = useState('diamonds');
+  const [availableCategories, setAvailableCategories] = useState<string[]>(['diamonds']);
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -133,6 +134,19 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
         setGameData(data.gameData);
         setPackages(data.diamondPacks || []);
         
+        // Extract unique categories from packages
+        const categories = new Set<string>();
+        (data.diamondPacks || []).forEach((pkg: any) => {
+          if (pkg.category) {
+            categories.add(pkg.category.toLowerCase());
+          }
+        });
+        // If no categories found, default to diamonds
+        if (categories.size === 0) {
+          categories.add('diamonds');
+        }
+        setAvailableCategories(Array.from(categories));
+        
         // Initialize validation fields based on gameData.validationFields
         if (data.gameData?.validationFields && Array.isArray(data.gameData.validationFields)) {
           const initialFields: Record<string, string> = {};
@@ -174,6 +188,11 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   };
 
   const handleValidate = async () => {
+    // Check authentication first - user needs to be logged in to validate
+    if (!ensureAuthenticated()) {
+      return;
+    }
+
     // Validate all required fields
     const validationFieldsList = gameData?.validationFields || ['playerId', 'server'];
     for (const field of validationFieldsList) {
@@ -221,6 +240,11 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   };
 
   const handlePackageSelect = (pkg: any) => {
+    // Check authentication first before allowing package selection
+    if (!ensureAuthenticated()) {
+      return;
+    }
+
     // Validate all required fields are filled
     const validationFieldsList = gameData?.validationFields || ['playerId', 'server'];
     const allFieldsFilled = validationFieldsList.every((field: string) => validationFields[field]?.trim());
@@ -236,9 +260,6 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
     }
     
     setSelectedPackage(pkg);
-    if (!ensureAuthenticated()) {
-      return;
-    }
     setShowPaymentOptions(true);
   };
 
@@ -463,16 +484,17 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       </div>
 
       {/* Bottom White Section - Rest of page */}
-      <div className="flex-1 bg-white pt-28 px-4 pb-6">
+      <div className="flex-1 bg-white md:pt-14 pt-14 px-4 pb-6">
         {/* Currency Type Selection - Card Based */}
         <div className="mb-4 mt-4">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {[0, 1, 2, 3].map((index) => {
-              const isSelected = index === 0 && selectedCurrency === 'diamonds';
+            {availableCategories.map((category, index) => {
+              const isSelected = selectedCurrency === category;
+              const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
               return (
                 <button
-                  key={index}
-                  onClick={() => setSelectedCurrency('diamonds')}
+                  key={category}
+                  onClick={() => setSelectedCurrency(category)}
                   className={`shrink-0 w-20 bg-white rounded-xl shadow-md p-2.5 flex flex-col items-center gap-1.5 touch-manipulation border-2 transition-all ${
                     isSelected
                       ? 'border-[#2F6BFD] shadow-lg'
@@ -494,7 +516,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                       <path d="M12 8V16M8 12H16" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
-                  <span className="text-gray-900 font-medium text-xs">Diamonds</span>
+                  <span className="text-gray-900 font-medium text-xs text-center">{categoryLabel}</span>
                 </button>
               );
             })}
@@ -512,7 +534,16 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
           </div>
         ) : (
           <div className="space-y-3">
-            {packages.map((pkg) => (
+            {packages
+              .filter((pkg) => {
+                // Filter packages by selected currency/category
+                if (selectedCurrency === 'diamonds') {
+                  // Show all packages if diamonds is selected (default)
+                  return !pkg.category || pkg.category.toLowerCase() === 'diamonds';
+                }
+                return pkg.category?.toLowerCase() === selectedCurrency;
+              })
+              .map((pkg) => (
               <div
                 key={pkg._id}
                 onClick={() => handlePackageSelect(pkg)}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -23,6 +23,9 @@ function HomeContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [banners, setBanners] = useState<any[]>([]);
   const [isLoadingBanners, setIsLoadingBanners] = useState(true);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+  const bannerScrollRef = useRef<HTMLDivElement>(null);
+  const autoplayIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -89,6 +92,39 @@ function HomeContent() {
       setIsLoadingBanners(false);
     }
   };
+
+  // Auto-play banner carousel
+  useEffect(() => {
+    const filteredBanners = banners.filter((banner) => banner.type === 'primary banner' || banner.type === 'secondary banner');
+    
+    if (filteredBanners.length > 1) {
+      autoplayIntervalRef.current = setInterval(() => {
+        setCurrentBannerIndex((prev) => {
+          const nextIndex = (prev + 1) % filteredBanners.length;
+          
+          // Scroll to current banner
+          if (bannerScrollRef.current) {
+            const scrollContainer = bannerScrollRef.current;
+            const bannerWidth = scrollContainer.offsetWidth * 0.90; // 90% width
+            const gap = 16; // gap-4 = 16px
+            const scrollPosition = (bannerWidth + gap) * nextIndex;
+            scrollContainer.scrollTo({
+              left: scrollPosition,
+              behavior: 'smooth'
+            });
+          }
+          
+          return nextIndex;
+        });
+      }, 3000); // Change banner every 3 seconds
+    }
+
+    return () => {
+      if (autoplayIntervalRef.current) {
+        clearInterval(autoplayIntervalRef.current);
+      }
+    };
+  }, [banners]);
 
   const fetchWalletBalance = async () => {
     try {
@@ -354,16 +390,19 @@ function HomeContent() {
         {/* Banner Carousel Section */}
         <div className="mb-6 bg-[#2F6BFD] -mx-4 px-4 pt-4 pb-6">
           {isLoadingBanners ? (
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2">
               {[1, 2, 3].map((item) => (
                 <div
                   key={item}
-                  className="shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 animate-pulse"
+                  className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-52 animate-pulse"
                 />
               ))}
             </div>
           ) : banners.length > 0 ? (
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory scroll-smooth">
+            <div 
+              ref={bannerScrollRef}
+              className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory scroll-smooth"
+            >
               {banners
                 .filter((banner) => banner.type === 'primary banner' || banner.type === 'secondary banner')
                 .map((banner, index) => (
@@ -372,16 +411,14 @@ function HomeContent() {
                     href={banner.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 snap-center overflow-hidden relative ${
-                      index === 0 ? 'ml-0' : ''
-                    } touch-manipulation active:scale-95 transition-transform`}
+                    className={`shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-52 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
                   >
                     <Image
                       src={banner.image || '/game.jpg'}
                       alt={banner.title || 'Banner'}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 640px) 85vw, 90vw"
+                      sizes="(max-width: 640px) 90vw, 448px"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/game.jpg';
                       }}
@@ -390,8 +427,8 @@ function HomeContent() {
                 ))}
             </div>
           ) : (
-            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
-              <div className="shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 opacity-50" />
+            <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2">
+              <div className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-52 opacity-50" />
             </div>
           )}
         </div>
