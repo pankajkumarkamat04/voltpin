@@ -197,16 +197,20 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       const response = await gameAPI.validateUser(gameId, playerId, serverId);
       const data = await response.json();
 
-      if (response.ok && data.response) {
-        toast.success('User validated successfully!');
-        if (data.data) {
-          setValidatedInfo({
-            nickname: data.data.nickname || 'N/A',
-            server: data.data.server || 'N/A'
-          });
-        }
+      // Handle new validation response structure
+      if (response.ok && (data.response === true || data.valid === true)) {
+        toast.success(data.msg || data.data?.msg || 'User validated successfully!');
+        
+        // Extract nickname and server from response
+        const nickname = data.name || data.data?.nickname || data.nickname || 'N/A';
+        const server = data.server || data.data?.server || serverId || 'N/A';
+        
+        setValidatedInfo({
+          nickname: nickname,
+          server: server
+        });
       } else {
-        toast.error(data.data?.msg || 'Invalid information provided');
+        toast.error(data.msg || data.data?.msg || 'Invalid information provided');
         setValidatedInfo(null);
       }
     } catch (error) {

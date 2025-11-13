@@ -52,7 +52,7 @@ export const authAPI = {
   completeRegistration: async (data: {
     name: string;
     email: string;
-    phoneNumber: string;
+    phone: string;
     password: string;
   }) => {
     return apiCall('/user/complete-registration', {
@@ -176,6 +176,15 @@ export const walletAPI = {
     return apiCall('/wallet/add', {
       method: 'POST',
       body: JSON.stringify({ amount }),
+    });
+  },
+};
+
+// Banner APIs
+export const bannerAPI = {
+  getPublicBanners: async () => {
+    return apiCall('/banners/public/banners', {
+      method: 'GET',
     });
   },
 };

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { HiPlus, HiShoppingBag, HiChartBar, HiPaperAirplane, HiUser } from 'react-icons/hi';
 import BottomNav from './components/BottomNav';
-import { gameAPI, walletAPI, authAPI } from './lib/api';
+import { gameAPI, walletAPI, authAPI, bannerAPI } from './lib/api';
 
 function HomeContent() {
   const router = useRouter();
@@ -21,6 +21,8 @@ function HomeContent() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [banners, setBanners] = useState<any[]>([]);
+  const [isLoadingBanners, setIsLoadingBanners] = useState(true);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -28,6 +30,7 @@ function HomeContent() {
     setIsAuthenticated(!!token);
     
     fetchGames();
+    fetchBanners();
     if (token) {
       fetchWalletBalance();
       fetchUserInfo();
@@ -66,6 +69,24 @@ function HomeContent() {
       toast.error('Network error. Please check your connection.');
     } finally {
       setIsLoadingGames(false);
+    }
+  };
+
+  const fetchBanners = async () => {
+    try {
+      setIsLoadingBanners(true);
+      const response = await bannerAPI.getPublicBanners();
+      const data = await response.json();
+      if (response.ok && data.success && data.data) {
+        // Sort banners by priority (lower number = higher priority)
+        const sortedBanners = [...data.data].sort((a: any, b: any) => (a.priority || 999) - (b.priority || 999));
+        setBanners(sortedBanners);
+      }
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+      // Silently fail for banners - don't show error toast
+    } finally {
+      setIsLoadingBanners(false);
     }
   };
 
@@ -332,16 +353,47 @@ function HomeContent() {
       <main className="flex-1 px-4 pb-4">
         {/* Banner Carousel Section */}
         <div className="mb-6 bg-[#2F6BFD] -mx-4 px-4 pt-4 pb-6">
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory scroll-smooth">
-            {[1, 2, 3].map((item, index) => (
-              <div
-                key={item}
-                className={`shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 snap-center ${
-                  index === 0 ? 'ml-0' : ''
-                }`}
-              />
-            ))}
-          </div>
+          {isLoadingBanners ? (
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : banners.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory scroll-smooth">
+              {banners
+                .filter((banner) => banner.type === 'primary banner' || banner.type === 'secondary banner')
+                .map((banner, index) => (
+                  <a
+                    key={banner._id}
+                    href={banner.url || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 snap-center overflow-hidden relative ${
+                      index === 0 ? 'ml-0' : ''
+                    } touch-manipulation active:scale-95 transition-transform`}
+                  >
+                    <Image
+                      src={banner.image || '/game.jpg'}
+                      alt={banner.title || 'Banner'}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 85vw, 90vw"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/game.jpg';
+                      }}
+                    />
+                  </a>
+                ))}
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+              <div className="shrink-0 w-[85%] sm:w-[90%] bg-white rounded-2xl shadow-md h-48 opacity-50" />
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

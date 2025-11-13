@@ -63,7 +63,7 @@ export default function SignUp() {
     setIsLoading(true);
     try {
       // Build registration payload - always include all fields
-      const registrationData: any = {
+      const registrationData = {
         name: name.trim(),
         email: email.trim(),
         phone: phoneNumber.trim(),
@@ -216,7 +216,7 @@ export default function SignUp() {
               />
             </div>
 
-            {/* Sign Up Button */}
+            {/* Register Button */}
             <button
               onClick={handleSignUp}
               disabled={
@@ -228,7 +228,7 @@ export default function SignUp() {
               }
               className="w-full bg-[#2F6BFD] text-white py-4 sm:py-3.5 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation min-h-[48px] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing Up...' : 'Sign Up Now'}
+              {isLoading ? 'Registering...' : 'Register'}
             </button>
           </div>
         </div>
