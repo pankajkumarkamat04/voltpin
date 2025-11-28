@@ -6,13 +6,13 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { HiMenu, HiUser } from 'react-icons/hi';
-import { HiCheck, HiX } from 'react-icons/hi';
+import { HiCheck, HiX, HiClock, HiBan } from 'react-icons/hi';
 import { transactionAPI } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 function PaymentStatusContent() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'success' | 'failed'>('success');
+  const [status, setStatus] = useState<'pending' | 'success' | 'failed' | 'cancelled'>('pending');
   const [paymentDetails, setPaymentDetails] = useState({
     orderId: '',
     paymentTime: '',
@@ -28,13 +28,20 @@ function PaymentStatusContent() {
     const txnId = searchParams.get('txn_id');
     const statusParam = searchParams.get('status');
 
-    if (statusParam === 'failed') {
-      setStatus('failed');
-      setIsLoading(false);
-    } else if (clientTxnId || txnId) {
+    // Use whichever transaction ID is available
+    const transactionId = clientTxnId || txnId;
+
+    if (transactionId) {
       fetchTransactionStatus(clientTxnId || '', txnId || '');
+    } else if (statusParam) {
+      // If status is provided directly in URL, use it
+      const validStatus = ['pending', 'success', 'failed', 'cancelled'].includes(statusParam) 
+        ? statusParam as 'pending' | 'success' | 'failed' | 'cancelled'
+        : 'pending';
+      setStatus(validStatus);
+      setIsLoading(false);
     } else {
-      setStatus(statusParam === 'failed' ? 'failed' : 'success');
+      setStatus('pending');
       setIsLoading(false);
     }
   }, [searchParams]);
@@ -42,23 +49,32 @@ function PaymentStatusContent() {
   const fetchTransactionStatus = async (clientTxnId: string, txnId: string) => {
     try {
       setIsLoading(true);
-      const response = await transactionAPI.getTransactionStatus(clientTxnId, txnId);
+      // Use whichever ID is available - pass empty string as undefined if not available
+      const response = await transactionAPI.getTransactionStatus(
+        clientTxnId || undefined,
+        txnId || undefined
+      );
       const data = await response.json();
 
       if (response.ok && data.success) {
         const tx = data.transaction || data.data;
-        setStatus(tx.status === 'success' ? 'success' : 'failed');
+        // Map status to our valid status types
+        const txStatus = tx.status || 'pending';
+        const validStatus = ['pending', 'success', 'failed', 'cancelled'].includes(txStatus)
+          ? txStatus as 'pending' | 'success' | 'failed' | 'cancelled'
+          : 'pending';
+        setStatus(validStatus);
         setPaymentDetails({
-          orderId: tx.orderId || clientTxnId || 'N/A',
-          paymentTime: tx.createdAt || new Date().toISOString(),
-          gameName: tx.paymentNote || 'Game',
-          userId: tx.customerNumber || 'N/A',
-          zoneId: 'N/A',
-          pack: tx.paymentNote || 'Pack',
+          orderId: tx.orderId || clientTxnId || txnId || 'N/A',
+          paymentTime: tx.createdAt || tx.paymentTime || new Date().toISOString(),
+          gameName: tx.gameName || tx.paymentNote || 'Game',
+          userId: tx.userId || tx.customerNumber || 'N/A',
+          zoneId: tx.zoneId || tx.server || 'N/A',
+          pack: tx.pack || tx.paymentNote || 'Pack',
         });
       } else {
         setStatus('failed');
-        toast.error('Failed to fetch transaction status.');
+        toast.error(data.message || 'Failed to fetch transaction status.');
       }
     } catch (error) {
       console.error('Error fetching transaction status:', error);
@@ -115,18 +131,30 @@ function PaymentStatusContent() {
           </div>
         ) : (
           <>
-            {/* Success/Failed Icon */}
-            <div className="w-32 h-32 rounded-full bg-[#2F6BFD] flex items-center justify-center shadow-lg mb-6">
+            {/* Status Icon */}
+            <div className={`w-32 h-32 rounded-full flex items-center justify-center shadow-lg mb-6 ${
+              status === 'success' ? 'bg-green-500' :
+              status === 'failed' ? 'bg-red-500' :
+              status === 'cancelled' ? 'bg-gray-500' :
+              'bg-yellow-500'
+            }`}>
               {status === 'success' ? (
                 <HiCheck className="text-white text-6xl" />
-              ) : (
+              ) : status === 'failed' ? (
                 <HiX className="text-white text-6xl" />
+              ) : status === 'cancelled' ? (
+                <HiBan className="text-white text-6xl" />
+              ) : (
+                <HiClock className="text-white text-6xl" />
               )}
             </div>
 
             {/* Status Title */}
             <h1 className="text-black font-bold text-3xl mb-8">
-              {status === 'success' ? 'Payment Successful' : 'Payment Failed'}
+              {status === 'success' ? 'Payment Successful' :
+               status === 'failed' ? 'Payment Failed' :
+               status === 'cancelled' ? 'Payment Cancelled' :
+               'Payment Pending'}
             </h1>
           </>
         )}
@@ -185,6 +213,36 @@ function PaymentStatusContent() {
                 className="flex-1 bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation text-center"
               >
                 Top Up Again
+              </Link>
+              <Link
+                href="/"
+                className="flex-1 bg-white border-2 border-[#2F6BFD] text-[#2F6BFD] py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-gray-50 hover:bg-gray-50 transition-colors touch-manipulation text-center"
+              >
+                Back To Home
+              </Link>
+            </>
+          ) : status === 'pending' ? (
+            <>
+              <Link
+                href="/"
+                className="flex-1 bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation text-center"
+              >
+                Back To Home
+              </Link>
+              <Link
+                href="/history"
+                className="flex-1 bg-white border-2 border-[#2F6BFD] text-[#2F6BFD] py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-gray-50 hover:bg-gray-50 transition-colors touch-manipulation text-center"
+              >
+                Check Status
+              </Link>
+            </>
+          ) : status === 'cancelled' ? (
+            <>
+              <Link
+                href="/topup"
+                className="flex-1 bg-[#2F6BFD] text-white py-3.5 rounded-lg font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation text-center"
+              >
+                Try Again
               </Link>
               <Link
                 href="/"

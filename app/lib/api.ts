@@ -153,10 +153,15 @@ export const transactionAPI = {
     });
   },
 
-  getTransactionStatus: async (clientTxnId: string, txnId?: string) => {
+  getTransactionStatus: async (clientTxnId?: string, txnId?: string) => {
     const queryParams = new URLSearchParams();
-    queryParams.append('client_txn_id', clientTxnId);
-    if (txnId) queryParams.append('txn_id', txnId);
+    // Handle both client_txn_id and txn_id - use whichever is provided
+    if (clientTxnId) {
+      queryParams.append('client_txn_id', clientTxnId);
+    }
+    if (txnId) {
+      queryParams.append('txn_id', txnId);
+    }
 
     return apiCall(`/transaction/status?${queryParams.toString()}`, {
       method: 'GET',
