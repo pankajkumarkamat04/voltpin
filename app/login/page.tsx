@@ -10,12 +10,11 @@ import { authAPI } from '../lib/api';
 export default function Login() {
   const [email, setEmail] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [isPhoneLogin, setIsPhoneLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [emailError, setEmailError] = useState('');
   const router = useRouter();
 
-  // Validate email/phone in real-time
+  // Validate phone in real-time
   const validateInput = (value: string) => {
     setEmail(value);
     setEmailError('');
@@ -24,58 +23,38 @@ export default function Login() {
       return;
     }
 
-    if (!isPhoneLogin) {
-      // Email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value.trim())) {
-        setEmailError('Please enter a valid email address');
-      }
-    } else {
-      // Phone validation
-      const phoneNumber = value.trim().replace(/[\s\-\(\)]/g, '');
-      if (!/^\d{10,}$/.test(phoneNumber)) {
-        setEmailError('Please enter a valid phone number (at least 10 digits)');
-      }
+    // Phone validation
+    const phoneNumber = value.trim().replace(/[\s\-\(\)]/g, '');
+    if (!/^\d{10,}$/.test(phoneNumber)) {
+      setEmailError('Please enter a valid phone number (at least 10 digits)');
     }
   };
 
   const handleSendOTP = async () => {
     if (!email.trim()) {
-      toast.error(`Please enter your ${isPhoneLogin ? 'phone number' : 'email address'}`);
+      toast.error('Please enter your phone number');
       return;
     }
 
-    // Email validation when not using phone login
-    if (!isPhoneLogin) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email.trim())) {
-        toast.error('Please enter a valid email address');
-        return;
-      }
-    }
-
-    // Phone number validation when using phone login (optional - basic validation)
-    if (isPhoneLogin) {
-      // Remove spaces, dashes, and parentheses for validation
-      const phoneNumber = email.trim().replace(/[\s\-\(\)]/g, '');
-      // Check if it's a valid phone number (at least 10 digits)
-      if (!/^\d{10,}$/.test(phoneNumber)) {
-        toast.error('Please enter a valid phone number (at least 10 digits)');
-        return;
-      }
+    // Phone number validation
+    const phoneNumber = email.trim().replace(/[\s\-\(\)]/g, '');
+    // Check if it's a valid phone number (at least 10 digits)
+    if (!/^\d{10,}$/.test(phoneNumber)) {
+      toast.error('Please enter a valid phone number (at least 10 digits)');
+      return;
     }
 
     setIsLoading(true);
     try {
-      const response = await authAPI.sendOTP(email, isPhoneLogin);
+      const response = await authAPI.sendOTP(email, true);
       const data = await response.json();
 
       if (response.ok) {
         toast.success('OTP sent successfully!');
-        // Store email/phone for OTP verification
+        // Store phone for OTP verification
         localStorage.setItem('loginData', JSON.stringify({
           email: email,
-          isPhoneLogin: isPhoneLogin
+          isPhoneLogin: true
         }));
         router.push('/otp');
       } else {
@@ -93,13 +72,13 @@ export default function Login() {
       {/* Top Blue Section - 50% */}
       <div className="h-[50vh] min-h-[280px] bg-[#2F6BFD] flex flex-col items-center justify-start pt-8 sm:pt-12 relative px-4">
         {/* Logo */}
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-2 sm:mb-44">
           <Image
             src="/logo.png"
             alt="Voltpin Logo"
-            width={100}
-            height={100}
-            className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] object-contain"
+            width={150}
+            height={150}
+            className="w-[150px] h-[150px] sm:w-[120px] sm:h-[120px] object-contain"
             priority
           />
         </div>
@@ -116,11 +95,11 @@ export default function Login() {
         {/* White Card Overlay - Half on blue, half on grey */}
         <div className="absolute top-[-100px] sm:top-[-120px] left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] sm:w-full max-w-md">
           <div className="bg-white rounded-t-4xl sm:rounded-t-[2.5rem] rounded-b-3xl shadow-xl p-6 sm:p-8">
-            {/* Email/Phone Input Field */}
+            {/* Phone Input Field */}
             <div className="mb-5">
               <input
-                type={isPhoneLogin ? "tel" : "email"}
-                placeholder={isPhoneLogin ? "Enter your phone number" : "Enter your email"}
+                type="tel"
+                placeholder="Enter your phone number"
                 value={email}
                 onChange={(e) => validateInput(e.target.value)}
                 className={`w-full px-4 py-4 sm:py-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation ${
@@ -132,8 +111,8 @@ export default function Login() {
               )}
             </div>
 
-            {/* Remember me and Login with number */}
-            <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
+            {/* Remember me */}
+            <div className="flex items-center mb-6">
               <label className="flex items-center cursor-pointer touch-manipulation min-h-[44px]">
                 <input
                   type="checkbox"
@@ -143,17 +122,6 @@ export default function Login() {
                 />
                 <span className="text-gray-800 text-sm sm:text-sm">Remember me</span>
               </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsPhoneLogin(!isPhoneLogin);
-                  setEmail(''); // Clear input when switching
-                  setEmailError(''); // Clear error when switching
-                }}
-                className="text-[#2F6BFD] text-sm font-medium hover:underline touch-manipulation min-h-[44px] flex items-center"
-              >
-                {isPhoneLogin ? 'Login with email?' : 'Login with number?'}
-              </button>
             </div>
 
             {/* Send OTP Button */}

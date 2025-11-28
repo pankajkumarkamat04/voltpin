@@ -141,26 +141,26 @@ function AddPointsContent() {
       {/* White Background Section - Point Selection Grid */}
       <div className="flex-1 bg-white px-4 py-6">
         {/* Point Selection Grid - 2 rows x 3 columns */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3">
           {pointOptions.map((points, index) => (
             <button
               key={index}
-              className="bg-[#2F6BFD] rounded-2xl shadow-lg p-4 flex flex-col items-center justify-center gap-3 active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
+              className="bg-[#2F6BFD] rounded-xl shadow-md aspect-square p-3 flex flex-col items-center justify-center gap-2 active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
               onClick={() => setAmount(points.toString())}
             >
               {/* V Icon */}
-              <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
                 <Image
                   src="/coin.png"
                   alt="Coin"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 object-cover"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 object-cover"
                 />
               </div>
               {/* Points Value */}
-              <div className="bg-white rounded-lg px-4 py-2 w-full">
-                <span className="text-gray-800 font-semibold text-sm">{points}</span>
+              <div className="bg-white rounded-lg px-2 py-1.5 w-full">
+                <span className="text-gray-800 font-semibold text-xs">{points}</span>
               </div>
             </button>
           ))}

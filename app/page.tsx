@@ -214,7 +214,7 @@ function HomeContent() {
         {/* Menu Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <p className="text-gray-900 font-bold text-lg mb-1">Welcome</p>
+            <p className="text-gray-900 font-bold text-lg">Welcome</p>
             <p className="text-[#2F6BFD] font-bold text-xl">
               {isAuthenticated ? username : 'Guest'}
             </p>
@@ -248,50 +248,51 @@ function HomeContent() {
               onClick={() => setIsMenuOpen(false)}
               className="w-full flex items-center gap-2 px-6 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             >
-              <div className="text-[#2F6BFD]">
+              <div className="w-10 h-10 bg-[#2F6BFD] rounded-lg flex items-center justify-center shrink-0">
+                <div className="text-white">
                 {item.icon === 'home' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 12L5 10M5 10L12 3L19 10M5 10V20C5 20.5304 5.21071 21.0391 5.58579 21.4142C5.96086 21.7893 6.46957 22 7 22H9C9.53043 22 10.0391 21.7893 10.4142 21.4142C10.7893 21.0391 11 20.5304 11 20V16C11 15.4696 11.2107 14.9609 11.5858 14.5858C11.9609 14.2107 12.4696 14 13 14H15C15.5304 14 16.0391 14.2107 16.4142 14.5858C16.7893 14.9609 17 15.4696 17 16V20C17 20.5304 17.2107 21.0391 17.5858 21.4142C17.9609 21.7893 18.4696 22 19 22H21C21.5304 22 22.0391 21.7893 22.4142 21.4142C22.7893 21.0391 23 20.5304 23 20V10M19 10L21 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'announcements' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M18 8A6 6 0 0 0 6 8C6 11.3137 3 14 3 14H21C21 14 18 11.3137 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'profile' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'games' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 12H4C2.89543 12 2 11.1046 2 10V6C2 4.89543 2.89543 4 4 4H8C9.10457 4 10 4.89543 10 6V8M14 12H20C21.1046 12 22 11.1046 22 10V6C22 4.89543 21.1046 4 20 4H16C14.8954 4 14 4.89543 14 6V8M10 20H14C15.1046 20 16 19.1046 16 18V14C16 12.8954 15.1046 12 14 12H10C8.89543 12 8 12.8954 8 14V18C8 19.1046 8.89543 20 10 20Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'orders' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 2L3 6V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V6L18 2H6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M3 6H21" stroke="currentColor" strokeWidth="2"/>
                     <path d="M16 10C16 11.0609 15.5786 12.0783 14.8284 12.8284C14.0783 13.5786 13.0609 14 12 14C10.9391 14 9.92172 13.5786 9.17157 12.8284C8.42143 12.0783 8 11.0609 8 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'leaderboards' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 3V21H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M7 16L12 11L16 15L21 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M21 10H16V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'contact' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22 16.92V19.92C22.0011 20.1985 21.9441 20.4742 21.8325 20.7292C21.7209 20.9841 21.5573 21.2126 21.3528 21.3992C21.1482 21.5857 20.9071 21.7262 20.6447 21.8117C20.3822 21.8972 20.1044 21.9257 19.83 21.895C16.7425 21.5356 13.787 20.5301 11.19 18.96C8.77382 17.5546 6.72533 15.5061 5.32 13.09C3.74995 10.493 2.74441 7.53752 2.385 4.45C2.35434 4.17557 2.38284 3.89779 2.46834 3.63535C2.55384 3.37291 2.69434 3.13179 2.88084 2.92723C3.06734 2.72268 3.29584 2.55912 3.55078 2.44753C3.80572 2.33594 4.08145 2.27894 4.36 2.28H7.36C8.04522 2.28019 8.70251 2.55073 9.19178 3.03174C9.68105 3.51275 9.96099 4.16392 9.97 4.85C10.0015 5.41364 10.1242 5.96858 10.333 6.49C10.5418 7.01142 10.8334 7.49182 11.195 7.91C11.4558 8.22247 11.6456 8.59035 11.75 8.985C11.8544 9.37965 11.8708 9.79166 11.798 10.192C11.7252 10.5923 11.5647 10.9711 11.33 11.3C11.0953 11.6289 10.7927 11.8995 10.444 12.092C10.0953 12.2845 9.70928 12.3943 9.31 12.413C8.66392 12.423 8.03275 12.223 7.51 11.845C7.09182 11.4834 6.61142 11.1918 6.09 10.983C5.56858 10.7742 5.01364 10.6515 4.45 10.62C3.76392 10.611 3.11275 10.891 2.63174 11.3803C2.15073 11.8695 1.88019 12.5268 1.88 13.212V16.212C1.88019 16.8972 2.15073 17.5545 2.63174 18.0438C3.11275 18.533 3.76392 18.813 4.45 18.822C5.01364 18.8505 5.56858 18.9732 6.09 19.182C6.61142 19.3908 7.09182 19.6824 7.51 20.044C8.03275 20.422 8.66392 20.622 9.31 20.612C9.70928 20.5933 10.0953 20.4835 10.444 20.291C10.7927 20.0985 11.0953 19.8279 11.33 19.499C11.5647 19.1701 11.7252 18.7913 11.798 18.391C11.8708 17.9907 11.8544 17.5787 11.75 17.184C11.6456 16.7894 11.4558 16.4215 11.195 16.109C10.8334 15.6908 10.5418 15.2104 10.333 14.689C10.1242 14.1676 10.0015 13.6126 9.97 13.049C9.96099 12.3639 9.68105 11.7127 9.19178 11.2317C8.70251 10.7507 8.04522 10.4802 7.36 10.48H4.36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
                 {item.icon === 'terms' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -300,11 +301,12 @@ function HomeContent() {
                   </svg>
                 )}
                 {item.icon === 'privacy' && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
+                </div>
               </div>
               <span className="text-gray-900 font-medium text-base">{item.label}</span>
             </Link>
@@ -348,9 +350,9 @@ function HomeContent() {
           <Image
             src="/logo.png"
             alt="Voltpin Logo"
-            width={40}
-            height={40}
-            className="w-10 h-10 object-contain"
+            width={48}
+            height={48}
+            className="w-12 h-12 object-contain"
             priority
           />
         </Link>
@@ -364,17 +366,17 @@ function HomeContent() {
                 <Image
                   src="/coin.png"
                   alt="Coin"
-                  width={16}
-                  height={16}
-                  className="w-4 h-4 object-contain"
+                  width={18}
+                  height={18}
+                  className="w-[18px] h-[18px] object-contain"
                 />
-                <span className="text-gray-900 font-semibold text-sm">
+                <span className="text-gray-900 font-semibold text-base">
                   {isLoadingBalance ? '...' : walletBalance}
                 </span>
               </Link>
               {/* Profile Icon */}
               <Link href="/profile" className="text-white touch-manipulation">
-                <HiUser className="w-6 h-6" />
+                <HiUser className="w-7 h-7" />
               </Link>
             </>
           ) : (
@@ -388,13 +390,13 @@ function HomeContent() {
       {/* Main Content - Scrollable */}
       <main className="flex-1 px-4 pb-4">
         {/* Banner Carousel Section */}
-        <div className="mb-6 bg-[#2F6BFD] -mx-4 px-4 pt-4 pb-6">
+        <div className="mb-4 bg-[#2F6BFD] -mx-4 px-4 pt-3 pb-4">
           {isLoadingBanners ? (
             <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2">
               {[1, 2, 3].map((item) => (
                 <div
                   key={item}
-                  className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-52 animate-pulse"
+                  className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-36 animate-pulse"
                 />
               ))}
             </div>
@@ -411,7 +413,7 @@ function HomeContent() {
                     href={banner.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-52 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
+                    className={`shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-36 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
                   >
                     <Image
                       src={banner.image || '/game.jpg'}
@@ -428,7 +430,7 @@ function HomeContent() {
             </div>
           ) : (
             <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2">
-              <div className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-52 opacity-50" />
+              <div className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-36 opacity-50" />
             </div>
           )}
         </div>
@@ -446,7 +448,7 @@ function HomeContent() {
               <Link
                 key={index}
                 href={item.href || '#'}
-                className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square p-0.5 sm:p-1 shadow-md active:bg-[#2563eb] transition-colors touch-manipulation flex flex-col items-center justify-center gap-0.5"
+                className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square p-0.5 sm:p-1 shadow-[0_4px_8px_rgba(0,0,0,0.15)] active:bg-[#2563eb] transition-colors touch-manipulation flex flex-col items-center justify-center gap-0.5"
               >
                 <IconComponent className="text-white text-xl sm:text-2xl" />
                 <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">{item.label}</span>
@@ -533,20 +535,20 @@ function HomeContent() {
                 className="bg-white rounded-xl shadow-md overflow-hidden touch-manipulation active:scale-95 transition-transform"
               >
                 {/* Game Image */}
-                <div className="relative h-28 w-full overflow-hidden">
+                <div className="relative h-32 w-full overflow-hidden">
                   <Image
                     src={game.image || '/game.jpg'}
                     alt={game.name || 'Game'}
                     width={400}
-                    height={112}
+                    height={128}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 {/* Game Info */}
-                <div className="p-3">
-                  <h3 className="text-gray-900 font-semibold text-sm mb-1">{game.name || 'Game'}</h3>
-                  <p className="text-gray-500 text-xs">{game.publisher || 'Publisher'}</p>
+                <div className="p-2">
+                  <h3 className="text-gray-900 font-semibold text-xs mb-0.5">{game.name || 'Game'}</h3>
+                  <p className="text-gray-500 text-[10px]">{game.publisher || 'Publisher'}</p>
                 </div>
               </Link>
             ))}
