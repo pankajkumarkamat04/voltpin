@@ -213,11 +213,24 @@ function HomeContent() {
       >
         {/* Menu Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <p className="text-gray-900 font-bold text-lg">Welcome</p>
-            <p className="text-[#2F6BFD] font-bold text-xl">
-              {isAuthenticated ? username : 'Guest'}
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Logo */}
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-[#2F6BFD] border-2 border-[#2F6BFD] shrink-0 flex items-center justify-center">
+              <Image
+                src="/logo.png"
+                alt="Voltpin Logo"
+                width={48}
+                height={48}
+                className="w-full h-full object-contain"
+                priority
+              />
+            </div>
+            <div>
+              <p className="text-gray-900 font-bold text-lg">Welcome</p>
+              <p className="text-[#2F6BFD] font-bold text-xl">
+                {isAuthenticated ? username : 'Guest'}
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setIsMenuOpen(false)}
