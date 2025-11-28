@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+// All API calls use the centralized API functions from api.ts which include the base URL
 import { gameAPI, orderAPI, walletAPI } from '../lib/api';
 
 interface CheckoutProps {
@@ -14,8 +15,9 @@ interface CheckoutProps {
 export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps = {}) {
   const router = useRouter();
   const [validationFields, setValidationFields] = useState<Record<string, string>>({});
-  const [selectedCurrency, setSelectedCurrency] = useState('diamonds');
-  const [availableCategories, setAvailableCategories] = useState<string[]>(['diamonds']);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>('');
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [categoryImages, setCategoryImages] = useState<Record<string, string>>({});
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -134,18 +136,41 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
         setGameData(data.gameData);
         setPackages(data.diamondPacks || []);
         
-        // Extract unique categories from packages
+        // Extract unique categories from packages and find most popular product image for each
         const categories = new Set<string>();
+        const categoryPkgMap: Record<string, any[]> = {};
+        
         (data.diamondPacks || []).forEach((pkg: any) => {
           if (pkg.category) {
-            categories.add(pkg.category.toLowerCase());
+            const catLower = pkg.category.toLowerCase();
+            categories.add(catLower);
+            if (!categoryPkgMap[catLower]) {
+              categoryPkgMap[catLower] = [];
+            }
+            categoryPkgMap[catLower].push(pkg);
           }
         });
-        // If no categories found, default to diamonds
-        if (categories.size === 0) {
-          categories.add('diamonds');
+        
+        // Find the most popular product (first one, or by amount/priority) for each category image
+        const images: Record<string, string> = {};
+        Object.keys(categoryPkgMap).forEach((category) => {
+          const categoryPackages = categoryPkgMap[category];
+          // Sort by amount (most expensive/popular first) or use first package with image
+          const sortedPkgs = [...categoryPackages].sort((a, b) => (b.amount || 0) - (a.amount || 0));
+          const packageWithImage = sortedPkgs.find((pkg) => pkg.logo) || sortedPkgs[0];
+          if (packageWithImage && packageWithImage.logo) {
+            images[category] = packageWithImage.logo;
+          }
+        });
+        
+        const categoriesArray = Array.from(categories);
+        setAvailableCategories(categoriesArray);
+        setCategoryImages(images);
+        
+        // Set selectedCurrency to the first category from API response
+        if (categoriesArray.length > 0) {
+          setSelectedCurrency(categoriesArray[0]);
         }
-        setAvailableCategories(Array.from(categories));
         
         // Initialize validation fields based on gameData.validationFields
         if (data.gameData?.validationFields && Array.isArray(data.gameData.validationFields)) {
@@ -240,7 +265,12 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   };
 
   const handlePackageSelect = (pkg: any) => {
-    // Check authentication first before allowing package selection
+    // Allow package selection without validation - just select the package
+    setSelectedPackage(pkg);
+  };
+
+  const handleContinueWithPackage = () => {
+    // Check authentication when trying to continue
     if (!ensureAuthenticated()) {
       return;
     }
@@ -259,7 +289,12 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       return;
     }
     
-    setSelectedPackage(pkg);
+    if (!selectedPackage) {
+      toast.error('Please select a package first');
+      return;
+    }
+    
+    // Open payment options after validation
     setShowPaymentOptions(true);
   };
 
@@ -348,46 +383,79 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       setIsProcessingPayment(false);
     }
   };
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+  const isAuthenticated = !!token;
+
   return (
-    <>
-      {/* Top Blue Section - 50% */}
-      <div className="h-[50vh] bg-[#2F6BFD] relative">
+    <div className="min-h-screen flex flex-col bg-white pb-20">
+      {/* Top Blue Section */}
+      <div className="bg-gradient-to-br from-[#2F6BFD] to-[#1e40af] relative">
         {/* Header */}
-        <header className="px-4 py-3 flex items-center gap-3">
-          <Link href="/" className="text-white touch-manipulation">
+        <header className="px-4 py-3 flex items-center justify-between relative z-10">
+          <Link href="/" className="text-white touch-manipulation p-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Link>
-          <h1 className="text-white font-bold text-lg">Checkout</h1>
+          <h1 className="text-white font-bold text-lg absolute left-1/2 -translate-x-1/2">Checkout</h1>
+          <button className="text-white touch-manipulation p-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
         </header>
 
         {/* Game Information Card */}
-        <div className="px-4">
-          <div className="bg-white rounded-2xl shadow-md p-4">
-            <div className="flex items-center gap-4">
-              <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0">
-                <Image
-                  src={gameData?.image || "/game.jpg"}
-                  alt={gameData?.name || "Game"}
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/game.jpg";
-                  }}
-                />
+        <div className="px-4 py-4 relative z-10">
+          <div className="bg-white rounded-2xl shadow-lg p-4">
+            {isLoading || !gameData ? (
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-xl bg-gray-200 animate-pulse shrink-0"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 bg-gray-200 rounded animate-pulse w-32"></div>
+                  <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+                </div>
               </div>
-              <h2 className="text-gray-900 font-bold text-xl">{gameData?.name || 'Mobile Legends'}</h2>
-            </div>
+            ) : (
+              <div className="flex items-center gap-4 relative">
+                <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border-2 border-gray-100">
+                  <Image
+                    src={gameData.image || "/game.jpg"}
+                    alt={gameData.name || "Game"}
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/game.jpg";
+                    }}
+                  />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-gray-900 font-bold text-lg mb-1">{gameData.name || 'Game'}</h2>
+                  <p className="text-gray-500 text-sm">{validatedInfo?.nickname || 'N.A'}</p>
+                </div>
+                <button className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shrink-0">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* User Information Card - Overlapping Blue and White */}
-        <div className="px-4 mt-4 -mb-4 relative z-10">
-          <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+        <div className="px-4 mt-4 -mb-8 relative z-20">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             <div className="px-4 pt-4 pb-4">
-              <h3 className="text-gray-900 font-semibold text-base mb-4">Enter User Information</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-900 font-semibold text-base">Enter your informations</h3>
+                <button className="text-gray-400 hover:text-gray-600 touch-manipulation">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
               <div className="space-y-3 mb-4">
                 {gameData?.validationFields && Array.isArray(gameData.validationFields) && gameData.validationFields.length > 0 ? (
                   gameData.validationFields.map((field: string) => {
@@ -401,77 +469,138 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                     // If it's a server/zone related field and regionList exists, show dropdown
                     if (isServerRelatedField && regionList.length > 0) {
                       return (
-                        <select
-                          key={field}
-                          value={fieldValue}
-                          onChange={(e) => updateValidationField(field, e.target.value)}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 text-base touch-manipulation bg-white"
-                        >
-                          <option value="">Select {fieldLabel}</option>
-                          {regionList.map((region: any) => (
-                            <option key={region.code} value={region.code}>
-                              {region.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div key={field} className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <select
+                            value={fieldValue}
+                            onChange={(e) => updateValidationField(field, e.target.value)}
+                            className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 text-base touch-manipulation bg-white appearance-none"
+                          >
+                            <option value="">Select {fieldLabel}</option>
+                            {regionList.map((region: any) => (
+                              <option key={region.code} value={region.code}>
+                                {region.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        </div>
                       );
                     }
 
-                    // Otherwise, show text input
+                    // Otherwise, show text input with icon
+                    const isUserIdField = fieldLower.includes('user') || fieldLower.includes('player');
                     return (
-                      <input
-                        key={field}
-                        type="text"
-                        placeholder={fieldLabel.toUpperCase()}
-                        value={fieldValue}
-                        onChange={(e) => updateValidationField(field, e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
-                      />
+                      <div key={field} className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          {isUserIdField ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          ) : (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          placeholder={fieldLabel.toUpperCase()}
+                          value={fieldValue}
+                          onChange={(e) => updateValidationField(field, e.target.value)}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                        />
+                      </div>
                     );
                   })
                 ) : (
                   // Fallback to default fields if validationFields is not available
                   <>
-                    <input
-                      type="text"
-                      placeholder="PLAYER ID"
-                      value={validationFields.playerId || ''}
-                      onChange={(e) => updateValidationField('playerId', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
-                    />
-                    {/* Show dropdown for server if regionList exists, otherwise text input */}
-                    {gameData?.regionList && Array.isArray(gameData.regionList) && gameData.regionList.length > 0 ? (
-                      <select
-                        value={validationFields.server || ''}
-                        onChange={(e) => updateValidationField('server', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 text-base touch-manipulation bg-white"
-                      >
-                        <option value="">Select Server</option>
-                        {gameData.regionList.map((region: any) => (
-                          <option key={region.code} value={region.code}>
-                            {region.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
                       <input
                         type="text"
-                        placeholder="SERVER"
-                        value={validationFields.server || ''}
-                        onChange={(e) => updateValidationField('server', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                        placeholder="USER ID"
+                        value={validationFields.playerId || ''}
+                        onChange={(e) => updateValidationField('playerId', e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
                       />
+                    </div>
+                    {/* Show dropdown for server if regionList exists, otherwise text input */}
+                    {gameData?.regionList && Array.isArray(gameData.regionList) && gameData.regionList.length > 0 ? (
+                      <div className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <div className="relative">
+                          <select
+                            value={validationFields.server || ''}
+                            onChange={(e) => updateValidationField('server', e.target.value)}
+                            className="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 text-base touch-manipulation bg-white appearance-none"
+                          >
+                            <option value="">ZONE ID (required)</option>
+                            {gameData.regionList.map((region: any) => (
+                              <option key={region.code} value={region.code}>
+                                {region.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="ZONE ID (required)"
+                          value={validationFields.server || ''}
+                          onChange={(e) => updateValidationField('server', e.target.value)}
+                          className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2F6BFD] focus:border-transparent text-gray-800 placeholder-gray-400 text-base touch-manipulation"
+                        />
+                      </div>
                     )}
                   </>
                 )}
               </div>
-              <button
-                onClick={handleValidate}
-                disabled={isValidating}
-                className="w-full bg-[#2F6BFD] text-white py-3 rounded-xl font-semibold text-base shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isValidating ? 'VALIDATING...' : 'Validate'}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleValidate}
+                  disabled={isValidating}
+                  className="flex-1 bg-red-500 text-white py-3 rounded-lg font-semibold text-sm shadow-md active:bg-red-600 hover:bg-red-600 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isValidating ? 'VALIDATING...' : 'Validate'}
+                </button>
+              </div>
               {validatedInfo && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-sm text-gray-700"><span className="font-semibold">Name:</span> {validatedInfo.nickname}</p>
@@ -484,44 +613,68 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       </div>
 
       {/* Bottom White Section - Rest of page */}
-      <div className="flex-1 bg-white md:pt-14 pt-14 px-4 pb-6">
+      <div className="flex-1 bg-gray-50 pt-14 px-4 pb-24">
         {/* Currency Type Selection - Card Based */}
-        <div className="mb-4 mt-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            {availableCategories.map((category, index) => {
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="text-gray-500">Loading categories...</div>
+          </div>
+        ) : availableCategories.length > 0 ? (
+          <div className="mb-4 mt-4">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {availableCategories.map((category, index) => {
               const isSelected = selectedCurrency === category;
               const categoryLabel = category.charAt(0).toUpperCase() + category.slice(1);
+              const categoryImage = categoryImages[category];
               return (
                 <button
                   key={category}
                   onClick={() => setSelectedCurrency(category)}
-                  className={`shrink-0 w-20 bg-white rounded-xl shadow-md p-2.5 flex flex-col items-center gap-1.5 touch-manipulation border-2 transition-all ${
+                  className={`shrink-0 w-20 aspect-square bg-white rounded-lg shadow-md p-2 flex flex-col items-center justify-center gap-1 touch-manipulation border-2 transition-all ${
                     isSelected
                       ? 'border-[#2F6BFD] shadow-lg'
                       : 'border-gray-200'
-                  } relative`}
+                  } relative overflow-hidden`}
                 >
                   {isSelected && (
-                    <div className="absolute top-1 right-1 w-5 h-5 bg-[#2F6BFD] rounded-full flex items-center justify-center shadow-md">
+                    <div className="absolute top-1 right-1 w-5 h-5 bg-[#2F6BFD] rounded-full flex items-center justify-center shadow-md z-10">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   )}
-                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                    isSelected ? 'bg-blue-50' : 'bg-gray-50'
+                  <div className={`w-full h-full rounded-lg flex items-center justify-center overflow-hidden ${
+                    isSelected ? 'ring-2 ring-blue-200' : ''
                   }`}>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M6 3L3 6V18L6 21H18L21 18V6L18 3H6Z" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 8V16M8 12H16" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    {categoryImage ? (
+                      <Image
+                        src={categoryImage}
+                        alt={categoryLabel}
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/game.jpg';
+                        }}
+                      />
+                    ) : (
+                      <div className={`w-full h-full flex items-center justify-center ${
+                        isSelected ? 'bg-blue-50' : 'bg-gray-50'
+                      }`}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 3L3 6V18L6 21H18L21 18V6L18 3H6Z" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M12 8V16M8 12H16" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-gray-900 font-medium text-xs text-center">{categoryLabel}</span>
+                  <span className="text-gray-900 font-medium text-[10px] text-center leading-tight">{categoryLabel}</span>
                 </button>
               );
-            })}
+              })}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {/* Top-up Options List */}
         {isLoading ? (
@@ -537,51 +690,95 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
             {packages
               .filter((pkg) => {
                 // Filter packages by selected currency/category
-                if (selectedCurrency === 'diamonds') {
-                  // Show all packages if diamonds is selected (default)
-                  return !pkg.category || pkg.category.toLowerCase() === 'diamonds';
+                if (!selectedCurrency) {
+                  return false; // Don't show packages if no category is selected
                 }
                 return pkg.category?.toLowerCase() === selectedCurrency;
               })
-              .map((pkg) => (
-              <div
-                key={pkg._id}
-                onClick={() => handlePackageSelect(pkg)}
-                className={`bg-white rounded-xl shadow-md p-4 flex items-center gap-4 touch-manipulation border-2 ${
-                  selectedPackage?._id === pkg._id ? 'border-[#2F6BFD]' : 'border-transparent'
-                }`}
-              >
-                {/* Package Logo/Icon */}
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
-                  {pkg.logo ? (
-                    <Image src={pkg.logo} alt={pkg.description} width={48} height={48} className="w-full h-full object-cover" />
-                  ) : (
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M6 3L3 6V18L6 21H18L21 18V6L18 3H6Z" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 8V16M8 12H16" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
-                </div>
-
-                {/* Package Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-gray-900 font-semibold text-base">{pkg.description || 'Diamond Pack'}</span>
-                    {pkg.category && (
-                      <span className="bg-[#2F6BFD] text-white px-2 py-0.5 rounded text-xs font-medium">{pkg.category}</span>
+              .map((pkg) => {
+                return (
+                  <div
+                    key={pkg._id}
+                    onClick={() => handlePackageSelect(pkg)}
+                    className={`bg-white rounded-xl shadow-md overflow-hidden touch-manipulation border-2 transition-all relative ${
+                      selectedPackage?._id === pkg._id ? 'border-[#2F6BFD] shadow-lg' : 'border-transparent'
+                    }`}
+                  >
+                    {/* Selected Checkmark */}
+                    {selectedPackage?._id === pkg._id && (
+                      <div className="absolute top-2 right-2 z-10 w-6 h-6 bg-[#2F6BFD] rounded-full flex items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 6L9 17L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </div>
                     )}
-                  </div>
-                </div>
 
-                {/* Price */}
-                <div className="flex flex-col items-end">
-                  <span className="text-green-600 font-bold text-base">₹{pkg.amount}</span>
-                </div>
-              </div>
-            ))}
+                    <div className="p-4 flex items-center gap-4">
+                      {/* Package Image/Logo */}
+                      <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-gray-100">
+                        {pkg.logo ? (
+                          <Image 
+                            src={pkg.logo} 
+                            alt={pkg.description} 
+                            width={64} 
+                            height={64} 
+                            className="w-full h-full object-cover" 
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M6 3L3 6V18L6 21H18L21 18V6L18 3H6Z" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M12 8V16M8 12H16" stroke="#2F6BFD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Package Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start gap-2 mb-1">
+                          <span className="text-gray-900 font-semibold text-base truncate">{pkg.description || 'Diamond Pack'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-green-600 font-bold text-lg">₹{pkg.amount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
+
+      {/* Bottom Action Button - Fixed */}
+      {!isAuthenticated && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 shadow-lg">
+          <button
+            onClick={() => {
+              try {
+                const redirectPath = `${window.location.pathname}${window.location.search}`;
+                localStorage.setItem('intendedPath', redirectPath || '/');
+              } catch {}
+              router.push('/login');
+            }}
+            className="w-full bg-[#2F6BFD] text-white py-4 rounded-xl font-bold text-base shadow-lg active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
+          >
+            PLEASE LOGIN TO CONTINUE {selectedPackage ? `WITH ₹${selectedPackage.amount}` : ''}
+          </button>
+        </div>
+      )}
+
+      {isAuthenticated && selectedPackage && !showPaymentOptions && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 shadow-lg">
+          <button
+            onClick={handleContinueWithPackage}
+            className="w-full bg-[#2F6BFD] text-white py-4 rounded-xl font-bold text-base shadow-lg active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
+          >
+            CONTINUE WITH ₹{selectedPackage.amount}
+          </button>
+        </div>
+      )}
 
       {/* Payment Options Modal - Half Screen */}
       {showPaymentOptions && (
@@ -757,7 +954,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }
 

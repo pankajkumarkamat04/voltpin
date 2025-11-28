@@ -434,7 +434,7 @@ function HomeContent() {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-4 gap-2 mb-6">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-4 sm:mb-6">
           {[
             { icon: HiPlus, label: 'Add Points', href: '/add-points' },
             { icon: HiShoppingBag, label: 'Orders', href: '/history' },
@@ -446,12 +446,10 @@ function HomeContent() {
               <Link
                 key={index}
                 href={item.href || '#'}
-                className="bg-[#2F6BFD] rounded-xl p-2.5 shadow-md active:bg-[#2563eb] transition-colors touch-manipulation"
+                className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square p-0.5 sm:p-1 shadow-md active:bg-[#2563eb] transition-colors touch-manipulation flex flex-col items-center justify-center gap-0.5"
               >
-                <div className="flex flex-col items-center gap-1.5">
-                  <IconComponent className="text-white text-lg" />
-                  <span className="text-white text-[10px] font-medium text-center leading-tight">{item.label}</span>
-                </div>
+                <IconComponent className="text-white text-xl sm:text-2xl" />
+                <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">{item.label}</span>
               </Link>
             );
           })}
