@@ -183,6 +183,23 @@ export const walletAPI = {
       body: JSON.stringify({ amount }),
     });
   },
+
+  getLedger: async (params: {
+    page?: number;
+    limit?: number;
+    startDate?: string;
+    endDate?: string;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.startDate) queryParams.append('startDate', params.startDate);
+    if (params.endDate) queryParams.append('endDate', params.endDate);
+
+    return apiCall(`/wallet/ledger?${queryParams.toString()}`, {
+      method: 'GET',
+    });
+  },
 };
 
 // Banner APIs

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { orderAPI, transactionAPI, walletAPI } from '../lib/api';
+import { orderAPI, walletAPI } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 function HistoryContent() {
@@ -80,24 +80,24 @@ function HistoryContent() {
   const fetchWalletHistory = async () => {
     try {
       setIsLoadingWalletHistory(true);
-      // Using order history API for wallet transactions (ledger)
-      const response = await orderAPI.getOrderHistory({
+      // Using wallet ledger API for wallet transactions
+      const response = await walletAPI.getLedger({
         page: 1,
         limit: 50,
       });
 
       const data = await response.json();
       if (response.ok && data.success) {
-        // Transform orders to wallet transactions format
-        const transformed = (data.orders || []).map((order: any) => ({
-          id: order._id,
-          amount: order.amount,
-          before: 0,
-          after: 0,
-          productInfo: order.description || '',
-          transactionId: order.orderId,
-          date: order.createdAt,
-          type: order.paymentMethod === 'wallet' ? 'debit' : 'credit',
+        // Transform ledger entries to wallet transactions format
+        const transformed = (data.ledger || data.transactions || []).map((entry: any) => ({
+          id: entry._id || entry.id,
+          amount: entry.amount || 0,
+          before: entry.beforeBalance || entry.before || 0,
+          after: entry.afterBalance || entry.after || 0,
+          productInfo: entry.description || entry.productInfo || '',
+          transactionId: entry.transactionId || entry.orderId || entry._id,
+          date: entry.createdAt || entry.date,
+          type: entry.type || (entry.amount >= 0 ? 'credit' : 'debit'),
         }));
         setWalletTransactions(transformed);
       }
@@ -111,26 +111,40 @@ function HistoryContent() {
   const fetchPaymentHistory = async () => {
     try {
       setIsLoadingPayment(true);
-      const response = await transactionAPI.getTransactionHistory({
+      // Using order history API for payment history
+      const response = await orderAPI.getOrderHistory({
         page: 1,
-        limit: 10,
+        limit: 50,
       });
 
       const data = await response.json();
       if (response.ok && data.success) {
-        const transformed = (data.transactions || []).map((tx: any) => ({
-          id: tx._id,
-          status: tx.status === 'success' ? 'Successful' : tx.status,
-          game: tx.paymentNote || 'Payment',
-          date: tx.createdAt,
-          amount: `${tx.amount} INR`,
-          orderId: tx.orderId || tx._id,
-          paymentTime: tx.createdAt,
-          gameName: 'Game',
-          userId: tx.customerNumber || 'N/A',
-          zoneId: 'N/A',
-          pack: tx.paymentNote || 'Pack',
-        }));
+        // Transform orders to payment transactions format
+        const transformed = (data.orders || []).map((order: any) => {
+          // Parse description JSON if available
+          let descriptionData = { playerId: 'N/A', server: 'N/A', text: '' };
+          if (order.description) {
+            try {
+              descriptionData = JSON.parse(order.description);
+            } catch {
+              descriptionData = { playerId: 'N/A', server: 'N/A', text: order.description };
+            }
+          }
+
+          return {
+            id: order._id,
+            status: order.status === 'success' ? 'Successful' : order.status || 'Pending',
+            game: order.gameName || 'Game',
+            date: order.createdAt,
+            amount: `${order.amount} INR`,
+            orderId: order.orderId,
+            paymentTime: order.createdAt,
+            gameName: order.gameName || 'Game',
+            userId: descriptionData.playerId || 'N/A',
+            zoneId: descriptionData.server || 'N/A',
+            pack: order.items?.[0]?.itemName || 'Pack',
+          };
+        });
         setPaymentTransactions(transformed);
       }
     } catch (error) {
@@ -202,12 +216,18 @@ function HistoryContent() {
     <div className="min-h-screen flex flex-col bg-white pb-20">
       {/* Header */}
       <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-        <button onClick={() => router.back()} className="text-white touch-manipulation">
+        <button onClick={() => {
+          if (window.history.length > 1) {
+            router.back();
+          } else {
+            router.push('/');
+          }
+        }} className="text-white touch-manipulation relative z-10">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Transaction History</h1>
+        <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0 pointer-events-none">Transaction History</h1>
       </header>
 
       {/* Navigation Tabs */}
@@ -400,32 +420,32 @@ function HistoryContent() {
                 key={transaction.id}
                 className="bg-[#2F6BFD] rounded-xl p-4 flex items-start gap-4"
               >
-            {/* V Icon */}
-            <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shrink-0">
-              <Image
-                src="/coin.png"
-                alt="Coin"
-                width={56}
-                height={56}
-                className="w-full h-full object-cover"
-              />
-            </div>
+                {/* V Icon */}
+                <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shrink-0">
+                  <Image
+                    src="/coin.png"
+                    alt="Coin"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-              {/* Transaction Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-white font-bold text-2xl mb-2">
-                  {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount}
-                </h3>
-                <div className="space-y-1 text-white text-xs">
-                  <p>Before: {transaction.before} After: {transaction.after}</p>
-                  <p>Product info: {transaction.productInfo || 'N/A'}</p>
-                  <p>Transaction ID: {transaction.transactionId}</p>
-                  <p>{formatDate(transaction.date)}</p>
+                {/* Transaction Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-bold text-2xl mb-2">
+                    {transaction.type === 'credit' ? '+' : '-'}₹{transaction.amount}
+                  </h3>
+                  <div className="space-y-1 text-white text-xs">
+                    <p>Before: {transaction.before} After: {transaction.after}</p>
+                    <p>Product info: {transaction.productInfo || 'N/A'}</p>
+                    <p>Transaction ID: {transaction.transactionId}</p>
+                    <p>{formatDate(transaction.date)}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        )
+            ))
+          )
         )}
 
         {activeTab === 'payment' && (
