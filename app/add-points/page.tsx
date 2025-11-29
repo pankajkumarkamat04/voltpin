@@ -111,7 +111,7 @@ function AddPointsContent() {
                 <span className="text-white font-medium text-base">Available Volt Points</span>
               </div>
               {/* Points Display */}
-              <div className="bg-white rounded-lg px-4 py-2">
+              <div className="bg-white rounded-lg px-4">
                 <span className="text-gray-800 font-semibold text-base">
                   {isLoadingBalance ? '...' : walletBalance}
                 </span>
@@ -150,17 +150,17 @@ function AddPointsContent() {
               onClick={() => setAmount(points.toString())}
             >
               {/* V Icon */}
-              <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
                 <Image
                   src="/coin.png"
                   alt="Coin"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 object-cover"
+                  width={30}
+                  height={30}
+                  className="w-9 h-9 object-cover"
                 />
               </div>
               {/* Points Value */}
-              <div className="bg-white rounded-lg px-2 py-1.5 w-full">
+              <div className="bg-white rounded-lg w-full">
                 <span className="text-gray-800 font-semibold text-xs">{points}</span>
               </div>
             </button>

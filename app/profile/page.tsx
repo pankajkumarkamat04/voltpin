@@ -123,12 +123,18 @@ function ProfileContent() {
       <div className="bg-[#2F6BFD] pb-6">
         {/* Header */}
         <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-          <button onClick={() => router.back()} className="text-white touch-manipulation">
+          <button onClick={() => {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              router.push('/');
+            }
+          }} className="text-white touch-manipulation relative z-10">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
-          <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">User Profile</h1>
+          <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0 pointer-events-none">User Profile</h1>
         </header>
 
         {/* First White Card - User Profile Information */}
@@ -226,7 +232,7 @@ function ProfileContent() {
             </div>
             <div className="bg-white rounded-full px-5 py-2.5">
               <span className="text-[#2F6BFD] font-semibold text-sm">
-                {isLoading ? '...' : `${walletBalance} coins`}
+                {isLoading ? '...' : `${walletBalance} points`}
               </span>
             </div>
           </div>
