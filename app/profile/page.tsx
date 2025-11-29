@@ -93,7 +93,7 @@ function ProfileContent() {
     setIsUploadingPicture(true);
     try {
       const formData = new FormData();
-      formData.append('profilePicture', file);
+      formData.append('image', file);
 
       const response = await otherAPI.updateProfilePicture(formData);
       const data = await response.json();

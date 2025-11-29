@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { orderAPI, transactionAPI, walletAPI } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 function HistoryContent() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('order');
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
@@ -200,11 +202,11 @@ function HistoryContent() {
     <div className="min-h-screen flex flex-col bg-white pb-20">
       {/* Header */}
       <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-        <Link href="/" className="text-white touch-manipulation">
+        <button onClick={() => router.back()} className="text-white touch-manipulation">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </Link>
+        </button>
         <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Transaction History</h1>
       </header>
 

@@ -398,11 +398,11 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       <div className="bg-gradient-to-br from-[#2F6BFD] to-[#1e40af] relative">
         {/* Header */}
         <header className="px-4 py-3 flex items-center justify-between relative z-10">
-          <Link href="/" className="text-white touch-manipulation p-1">
+          <button onClick={() => router.back()} className="text-white touch-manipulation p-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </Link>
+          </button>
           <h1 className="text-white font-bold text-lg absolute left-1/2 -translate-x-1/2">Checkout</h1>
           <button className="text-white touch-manipulation p-1">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { walletAPI } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 function AddPointsContent() {
+  const router = useRouter();
   const [amount, setAmount] = useState('');
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -79,11 +80,11 @@ function AddPointsContent() {
         <header className="bg-[#2F6BFD] px-4 py-6 flex items-center relative">
           {/* Back Button */}
           <div className="absolute left-4">
-            <Link href="/profile" className="text-white touch-manipulation">
+            <button onClick={() => router.back()} className="text-white touch-manipulation">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </Link>
+            </button>
           </div>
 
           {/* Title */}

@@ -1,9 +1,10 @@
 'use client';
 
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FaInstagram, FaFacebook, FaWhatsapp, FaDiscord, FaTiktok, FaYoutube, FaTwitter } from 'react-icons/fa';
 
 export default function Social() {
+  const router = useRouter();
   const socialPlatforms = [
     { id: 'instagram', name: 'Instagram', icon: FaInstagram },
     { id: 'facebook', name: 'Facebook', icon: FaFacebook },
@@ -20,11 +21,11 @@ export default function Social() {
       <div className="h-[50vh] min-h-[280px] bg-[#2F6BFD] flex flex-col items-center justify-start pt-8 sm:pt-12 relative px-4 shrink-0">
         {/* Back Button */}
         <div className="absolute top-4 left-4">
-          <Link href="/profile" className="text-white touch-manipulation">
+          <button onClick={() => router.back()} className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </Link>
+          </button>
         </div>
 
         {/* Title */}

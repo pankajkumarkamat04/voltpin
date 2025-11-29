@@ -409,7 +409,7 @@ function HomeContent() {
               {[1, 2, 3].map((item) => (
                 <div
                   key={item}
-                  className="shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-36 animate-pulse"
+                  className="shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-48 animate-pulse"
                 />
               ))}
             </div>
@@ -426,7 +426,7 @@ function HomeContent() {
                     href={banner.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-36 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
+                    className={`shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-48 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
                   >
                     <Image
                       src={banner.image || '/game.jpg'}
@@ -443,7 +443,7 @@ function HomeContent() {
             </div>
           ) : (
             <div className="flex justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
-              <div className="shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-36 opacity-50" />
+              <div className="shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-48 opacity-50" />
             </div>
           )}
         </div>
@@ -461,9 +461,9 @@ function HomeContent() {
               <div key={index} className="flex flex-col items-center gap-1.5 sm:gap-2">
                 <Link
                   href={item.href || '#'}
-                  className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square w-14 sm:w-16 mx-auto p-2 sm:p-2.5 shadow-[0_4px_8px_rgba(0,0,0,0.15)] active:bg-[#2563eb] transition-colors touch-manipulation flex items-center justify-center"
+                  className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square w-16 sm:w-20 mx-auto p-3 sm:p-3.5 shadow-[0_4px_8px_rgba(0,0,0,0.15)] active:bg-[#2563eb] transition-colors touch-manipulation flex items-center justify-center"
                 >
-                  <IconComponent className="text-white text-3xl sm:text-4xl" />
+                  <IconComponent className="text-white text-4xl sm:text-5xl" />
                 </Link>
                 <span className="text-gray-800 text-xs sm:text-sm font-medium text-center leading-tight">{item.label}</span>
               </div>

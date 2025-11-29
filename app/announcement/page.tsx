@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { HiSpeakerphone } from 'react-icons/hi';
 import { HiChevronDown } from 'react-icons/hi';
@@ -18,6 +18,7 @@ interface Announcement {
 }
 
 function AnnouncementContent() {
+  const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,11 +73,11 @@ function AnnouncementContent() {
       <header className="bg-[#2F6BFD] px-4 py-6 flex flex-col items-center relative">
         {/* Back Button */}
         <div className="absolute top-4 left-4">
-          <Link href="/" className="text-white touch-manipulation">
+          <button onClick={() => router.back()} className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </Link>
+          </button>
         </div>
 
         {/* Title */}
