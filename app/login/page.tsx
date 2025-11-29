@@ -72,7 +72,7 @@ export default function Login() {
       {/* Top Blue Section - 50% */}
       <div className="h-[50vh] min-h-[280px] bg-[#2F6BFD] flex flex-col items-center justify-start pt-8 sm:pt-12 relative px-4">
         {/* Logo */}
-        <div className="mb-2 sm:mb-44">
+        <div>
           <Image
             src="/logo.png"
             alt="Voltpin Logo"

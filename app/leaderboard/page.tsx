@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { otherAPI } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -27,6 +27,7 @@ interface LeaderboardData {
 }
 
 function LeaderboardContent() {
+  const router = useRouter();
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -68,11 +69,11 @@ function LeaderboardContent() {
     return (
       <div className="min-h-screen flex flex-col bg-white pb-20">
         <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-          <Link href="/" className="text-white touch-manipulation">
+          <button onClick={() => router.back()} className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </Link>
+          </button>
           <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Leaderboards</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -86,11 +87,11 @@ function LeaderboardContent() {
     return (
       <div className="min-h-screen flex flex-col bg-white pb-20">
         <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-          <Link href="/" className="text-white touch-manipulation">
+          <button onClick={() => router.back()} className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </Link>
+          </button>
           <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Leaderboards</h1>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -104,11 +105,11 @@ function LeaderboardContent() {
     <div className="min-h-screen flex flex-col bg-white pb-20">
       {/* Header */}
       <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-        <Link href="/" className="text-white touch-manipulation">
+        <button onClick={() => router.back()} className="text-white touch-manipulation">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        </Link>
+        </button>
         <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">Leaderboards</h1>
       </header>
 

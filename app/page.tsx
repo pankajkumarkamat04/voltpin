@@ -105,8 +105,8 @@ function HomeContent() {
           // Scroll to current banner
           if (bannerScrollRef.current) {
             const scrollContainer = bannerScrollRef.current;
-            const bannerWidth = scrollContainer.offsetWidth * 0.90; // 90% width
-            const gap = 16; // gap-4 = 16px
+            const bannerWidth = scrollContainer.offsetWidth * 0.95; // 95% width
+            const gap = 8; // gap-2 = 8px
             const scrollPosition = (bannerWidth + gap) * nextIndex;
             scrollContainer.scrollTo({
               left: scrollPosition,
@@ -259,7 +259,7 @@ function HomeContent() {
               key={index}
               href={item.href}
               onClick={() => setIsMenuOpen(false)}
-              className="w-full flex items-center gap-2 px-6 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+              className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             >
               <div className="w-10 h-10 bg-[#2F6BFD] rounded-lg flex items-center justify-center shrink-0">
                 <div className="text-white">
@@ -405,18 +405,18 @@ function HomeContent() {
         {/* Banner Carousel Section */}
         <div className="mb-4 bg-[#2F6BFD] -mx-4 px-4 pt-3 pb-4">
           {isLoadingBanners ? (
-            <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2">
+            <div className="flex justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
               {[1, 2, 3].map((item) => (
                 <div
                   key={item}
-                  className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-36 animate-pulse"
+                  className="shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-36 animate-pulse"
                 />
               ))}
             </div>
           ) : banners.length > 0 ? (
             <div 
               ref={bannerScrollRef}
-              className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory scroll-smooth"
+              className="flex justify-center gap-2 overflow-x-auto scrollbar-hide pb-2 snap-x snap-mandatory scroll-smooth"
             >
               {banners
                 .filter((banner) => banner.type === 'primary banner' || banner.type === 'secondary banner')
@@ -426,14 +426,14 @@ function HomeContent() {
                     href={banner.url || '#'}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-36 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
+                    className={`shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-36 snap-center overflow-hidden relative mx-auto touch-manipulation active:scale-95 transition-transform`}
                   >
                     <Image
                       src={banner.image || '/game.jpg'}
                       alt={banner.title || 'Banner'}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 640px) 90vw, 448px"
+                      sizes="(max-width: 640px) 95vw, 448px"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/game.jpg';
                       }}
@@ -442,8 +442,8 @@ function HomeContent() {
                 ))}
             </div>
           ) : (
-            <div className="flex justify-center gap-4 overflow-x-auto scrollbar-hide pb-2">
-              <div className="shrink-0 w-[90%] max-w-md bg-white rounded-2xl shadow-md h-36 opacity-50" />
+            <div className="flex justify-center gap-2 overflow-x-auto scrollbar-hide pb-2">
+              <div className="shrink-0 w-[95%] max-w-md bg-white rounded-2xl shadow-md h-36 opacity-50" />
             </div>
           )}
         </div>
@@ -458,14 +458,15 @@ function HomeContent() {
           ].map((item, index) => {
             const IconComponent = item.icon;
             return (
-              <Link
-                key={index}
-                href={item.href || '#'}
-                className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square p-0.5 sm:p-1 shadow-[0_4px_8px_rgba(0,0,0,0.15)] active:bg-[#2563eb] transition-colors touch-manipulation flex flex-col items-center justify-center gap-0.5"
-              >
-                <IconComponent className="text-white text-xl sm:text-2xl" />
-                <span className="text-white text-xs sm:text-sm font-medium text-center leading-tight">{item.label}</span>
-              </Link>
+              <div key={index} className="flex flex-col items-center gap-1.5 sm:gap-2">
+                <Link
+                  href={item.href || '#'}
+                  className="bg-[#2F6BFD] rounded-lg sm:rounded-xl aspect-square w-14 sm:w-16 mx-auto p-2 sm:p-2.5 shadow-[0_4px_8px_rgba(0,0,0,0.15)] active:bg-[#2563eb] transition-colors touch-manipulation flex items-center justify-center"
+                >
+                  <IconComponent className="text-white text-3xl sm:text-4xl" />
+                </Link>
+                <span className="text-gray-800 text-xs sm:text-sm font-medium text-center leading-tight">{item.label}</span>
+              </div>
             );
           })}
         </div>

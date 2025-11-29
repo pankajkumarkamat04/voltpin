@@ -7,8 +7,8 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-2 left-4 right-4 bg-[#2F6BFD] px-4 py-3 rounded-4xl shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
-      <div className="flex items-center justify-around">
+    <nav className="fixed bottom-2 left-4 right-4 bg-[#2F6BFD] px-2 py-3 rounded-4xl shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+      <div className="flex items-center justify-between">
         {/* Home */}
         <Link href="/" className="flex flex-col items-center gap-1 touch-manipulation">
           <div className={pathname === '/' ? 'bg-white/20 rounded-lg px-1 py-1' : ''}>

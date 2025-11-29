@@ -265,8 +265,14 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
   };
 
   const handlePackageSelect = (pkg: any) => {
-    // Allow package selection without validation - just select the package
+    // Check authentication when selecting a package
+    if (!ensureAuthenticated()) {
+      return;
+    }
+    
+    // Set the selected package and open payment options directly
     setSelectedPackage(pkg);
+    setShowPaymentOptions(true);
   };
 
   const handleContinueWithPackage = () => {
@@ -434,7 +440,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                   <h2 className="text-gray-900 font-bold text-lg mb-1">{gameData.name || 'Game'}</h2>
                   <p className="text-gray-500 text-sm">{validatedInfo?.nickname || 'N.A'}</p>
                 </div>
-                <button className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shrink-0">
+                <button className="w-6 h-6 bg-[#2F6BFD] rounded-full flex items-center justify-center shrink-0">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
@@ -596,7 +602,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                 <button
                   onClick={handleValidate}
                   disabled={isValidating}
-                  className="flex-1 bg-red-500 text-white py-3 rounded-lg font-semibold text-sm shadow-md active:bg-red-600 hover:bg-red-600 transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 bg-[#2F6BFD] text-white py-3 rounded-lg font-semibold text-sm shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isValidating ? 'VALIDATING...' : 'Validate'}
                 </button>
@@ -751,35 +757,6 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
         )}
       </div>
 
-      {/* Bottom Action Button - Fixed */}
-      {!isAuthenticated && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 shadow-lg">
-          <button
-            onClick={() => {
-              try {
-                const redirectPath = `${window.location.pathname}${window.location.search}`;
-                localStorage.setItem('intendedPath', redirectPath || '/');
-              } catch {}
-              router.push('/login');
-            }}
-            className="w-full bg-[#2F6BFD] text-white py-4 rounded-xl font-bold text-base shadow-lg active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
-          >
-            PLEASE LOGIN TO CONTINUE {selectedPackage ? `WITH ₹${selectedPackage.amount}` : ''}
-          </button>
-        </div>
-      )}
-
-      {isAuthenticated && selectedPackage && !showPaymentOptions && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-30 shadow-lg">
-          <button
-            onClick={handleContinueWithPackage}
-            className="w-full bg-[#2F6BFD] text-white py-4 rounded-xl font-bold text-base shadow-lg active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation"
-          >
-            CONTINUE WITH ₹{selectedPackage.amount}
-          </button>
-        </div>
-      )}
-
       {/* Payment Options Modal - Half Screen */}
       {showPaymentOptions && (
         <>
@@ -905,7 +882,18 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
               {/* Payment Methods */}
               <div className="space-y-2">
                 {/* Volt Points Option */}
-                <div className="bg-white rounded-xl shadow-md p-3 flex items-center gap-3">
+                <div 
+                  onClick={() => {
+                    if (!isProcessingPayment && selectedPackage && walletBalance >= (selectedPackage?.amount || 0)) {
+                      processWalletPayment();
+                    }
+                  }}
+                  className={`bg-white rounded-xl shadow-md p-3 flex items-center gap-3 cursor-pointer touch-manipulation transition-all border-2 ${
+                    isProcessingPayment || !selectedPackage || walletBalance < (selectedPackage?.amount || 0)
+                      ? 'border-transparent opacity-50 cursor-not-allowed'
+                      : 'border-transparent hover:border-[#2F6BFD] hover:shadow-lg active:bg-gray-50'
+                  }`}
+                >
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                     <Image
                       src="/logo.png"
@@ -920,17 +908,24 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                     <span className="text-gray-900 font-semibold text-sm">Volt Points</span>
                     <p className="text-gray-500 text-xs mt-1">Available: {walletBalance} coins</p>
                   </div>
-                  <button
-                    onClick={processWalletPayment}
-                    disabled={isProcessingPayment || !selectedPackage || walletBalance < (selectedPackage?.amount || 0)}
-                    className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                  <div className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-md">
                     {selectedPackage ? `₹${selectedPackage.amount}` : '---'}
-                  </button>
+                  </div>
                 </div>
 
                 {/* UPI Option */}
-                <div className="bg-white rounded-xl shadow-md p-3 flex items-center gap-3">
+                <div 
+                  onClick={() => {
+                    if (!isProcessingPayment && selectedPackage) {
+                      processUPIPayment();
+                    }
+                  }}
+                  className={`bg-white rounded-xl shadow-md p-3 flex items-center gap-3 cursor-pointer touch-manipulation transition-all border-2 ${
+                    isProcessingPayment || !selectedPackage
+                      ? 'border-transparent opacity-50 cursor-not-allowed'
+                      : 'border-transparent hover:border-[#2F6BFD] hover:shadow-lg active:bg-gray-50'
+                  }`}
+                >
                   <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
                     <div className="text-center">
                       <span className="text-gray-900 font-bold text-[10px]">UPI</span>
@@ -941,13 +936,9 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                   <div className="flex-1">
                     <span className="text-gray-900 font-semibold text-sm">UPI</span>
                   </div>
-                  <button
-                    onClick={processUPIPayment}
-                    disabled={isProcessingPayment || !selectedPackage}
-                    className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-md active:bg-[#2563eb] hover:bg-[#2563eb] transition-colors touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                  <div className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-md">
                     {isProcessingPayment ? 'Processing...' : selectedPackage ? `₹${selectedPackage.amount}` : '---'}
-                  </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -957,4 +948,3 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
     </div>
   );
 }
-

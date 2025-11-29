@@ -19,6 +19,7 @@ function ProfileContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -75,17 +76,58 @@ function ProfileContent() {
     router.push('/');
   };
 
+  const handleProfilePictureClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        await handleProfilePictureUpload(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleProfilePictureUpload = async (file: File) => {
+    setIsUploadingPicture(true);
+    try {
+      const formData = new FormData();
+      formData.append('profilePicture', file);
+
+      const response = await otherAPI.updateProfilePicture(formData);
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Profile picture updated successfully!');
+        // Update the profile picture URL
+        if (data.profilePicture || data.data?.profilePicture) {
+          setProfilePicture(data.profilePicture || data.data.profilePicture);
+        }
+        // Refresh user data to get updated picture
+        fetchUserData();
+      } else {
+        toast.error(data.message || 'Failed to update profile picture');
+      }
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast.error('An error occurred while uploading profile picture');
+    } finally {
+      setIsUploadingPicture(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white pb-20">
       {/* Blue Background Section - Header and User Details */}
       <div className="bg-[#2F6BFD] pb-6">
         {/* Header */}
         <header className="bg-[#2F6BFD] px-4 py-3 flex items-center gap-3 relative">
-          <Link href="/" className="text-white touch-manipulation">
+          <button onClick={() => router.back()} className="text-white touch-manipulation">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </Link>
+          </button>
           <h1 className="text-white font-bold text-lg flex-1 text-center absolute left-0 right-0">User Profile</h1>
         </header>
 
@@ -96,13 +138,40 @@ function ProfileContent() {
           <div className="flex items-start gap-4 mb-6">
             {/* Profile Picture with Edit Icon */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-full bg-[#2F6BFD] border-2 border-white flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-3xl">U</span>
+              <div 
+                onClick={handleProfilePictureClick}
+                className="w-20 h-20 rounded-full bg-[#2F6BFD] border-2 border-white flex items-center justify-center shadow-md overflow-hidden cursor-pointer touch-manipulation relative"
+              >
+                {profilePicture ? (
+                  <Image
+                    src={profilePicture}
+                    alt="Profile"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      setProfilePicture(null);
+                    }}
+                  />
+                ) : (
+                  <span className="text-white font-bold text-3xl">
+                    {username ? username.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                )}
+                {isUploadingPicture && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
               </div>
               {/* Edit Icon Overlay */}
-              <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center shadow-sm">
+              <button
+                onClick={handleProfilePictureClick}
+                disabled={isUploadingPicture}
+                className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-white border border-gray-300 flex items-center justify-center shadow-sm cursor-pointer touch-manipulation hover:bg-gray-50 active:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed z-10"
+              >
                 <FiEdit2 className="text-gray-700 text-xs" />
-              </div>
+              </button>
             </div>
 
             {/* User Details */}
