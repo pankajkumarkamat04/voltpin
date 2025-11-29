@@ -99,13 +99,13 @@ function AddPointsContent() {
             <div className="bg-[#2F6BFD] mx-4 mt-4 mb-4 rounded-xl px-4 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* V Icon */}
-                <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0">
                   <Image
                     src="/coin.png"
                     alt="Coin"
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 object-cover"
+                    width={48}
+                    height={48}
+                    className="w-11 h-11 object-cover"
                   />
                 </div>
                 <span className="text-white font-medium text-base">Available Volt Points</span>
