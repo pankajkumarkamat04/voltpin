@@ -99,7 +99,7 @@ function AddPointsContent() {
             <div className="bg-[#2F6BFD] mx-4 mt-4 mb-4 rounded-xl px-4 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* V Icon */}
-                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0">
+                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
                   <Image
                     src="/coin.png"
                     alt="Coin"

@@ -376,10 +376,13 @@ function HistoryContent() {
                     <p className="text-white/80 text-xs">{formatDate(transaction.createdAt)}</p>
                   </div>
 
-                  {/* Amount Button */}
-                  <div className="bg-white text-[#2F6BFD] px-4 py-2 rounded-lg font-semibold text-sm shadow-md shrink-0">
-                    ₹{transaction.amount} {transaction.currency || 'INR'}
-                  </div>
+                  {/* View Button */}
+                  <button
+                    onClick={() => handleViewOrder(transaction)}
+                    className="bg-white text-[#2F6BFD] px-4 py-2 rounded-lg font-semibold text-sm shadow-md shrink-0 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+                  >
+                    View
+                  </button>
                 </div>
               );
             })
