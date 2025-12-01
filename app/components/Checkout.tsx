@@ -743,16 +743,70 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                       {/* Package Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start gap-2 mb-1">
-                          <span className="text-gray-900 font-semibold text-base truncate">{pkg.description || 'Diamond Pack'}</span>
+                          <span className="text-gray-900 font-semibold text-sm truncate">{pkg.description || 'Diamond Pack'}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-green-600 font-bold text-lg">₹{pkg.amount}</span>
+                          <span className="text-green-600 font-bold text-base">₹{pkg.amount}</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
+          </div>
+        )}
+
+        {/* 2x First Recharge Bonus Note for Mobile Legends */}
+        {gameData?.name && 
+         gameData.name.toLowerCase().includes('mobile legends') && 
+         selectedCurrency && 
+         (selectedCurrency.toLowerCase().includes('2x') || selectedCurrency.toLowerCase().includes('2 x')) &&
+         (selectedCurrency.toLowerCase().includes('first recharge') || selectedCurrency.toLowerCase().includes('recharge bonus')) && (
+          <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+            <h3 className="text-blue-900 font-bold text-base mb-3">2x First Recharge Bonus</h3>
+            <p className="text-blue-800 text-sm mb-3">
+              Total Diamonds received for each level:
+            </p>
+            <div className="space-y-2 text-blue-800 text-xs">
+              <div className="flex justify-between">
+                <span>50 Diamond level:</span>
+                <span className="font-semibold">50 base + 50 bonus = 100 total</span>
+              </div>
+              <div className="flex justify-between">
+                <span>150 Diamond level:</span>
+                <span className="font-semibold">150 base + 150 bonus = 300 total</span>
+              </div>
+              <div className="flex justify-between">
+                <span>250 Diamond level:</span>
+                <span className="font-semibold">250 base + 250 bonus = 500 total</span>
+              </div>
+              <div className="flex justify-between">
+                <span>500 Diamond level:</span>
+                <span className="font-semibold">500 base + 500 bonus = 1000 total</span>
+              </div>
+            </div>
+            <p className="text-blue-700 text-xs mt-3 italic">
+              Double Diamonds bonus applies only to your first purchase, regardless of payment channel or platform.
+            </p>
+          </div>
+        )}
+
+        {/* Weekly Pass Note */}
+        {selectedCurrency && 
+         selectedCurrency.toLowerCase().includes('weekly pass') && (
+          <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+            <h3 className="text-blue-900 font-bold text-base mb-3">Weekly Pass Notes</h3>
+            <div className="space-y-3 text-blue-800 text-xs">
+              <p>
+                <span className="font-semibold">1.</span> The game account level must reach level 5 in order to purchase the weekly diamond pass.
+              </p>
+              <p>
+                <span className="font-semibold">2.</span> A maximum of 10 weekly diamond passes can be purchased within a 70-day period on the third-party platform (the 10-pass count includes passes purchased in-game). Please do not make additional purchases to avoid losses.
+              </p>
+              <p>
+                <span className="font-semibold">3.</span> You will receive 80 diamonds on the day of purchase, with the extra 20 diamonds being sent to your Vault, which you need to log in to in order to claim. Additionally, you must log in and access the weekly pass page for 6 consecutive days to claim a total of 120 extra diamonds, with 20 extra diamonds per day. During the 7 days, you will earn a total of 220 diamonds.
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -796,11 +850,11 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                   <div className="flex-1 text-white">
                     <div className="mb-1">
                       <span className="text-xs opacity-90">Product:</span>
-                      <span className="ml-2 font-semibold text-sm">{selectedPackage?.description || '---'}</span>
+                      <span className="ml-2 font-semibold text-xs">{selectedPackage?.description || '---'}</span>
                     </div>
                     <div className="mb-1">
                       <span className="text-xs opacity-90">Amount:</span>
-                      <span className="ml-2 font-semibold text-sm">₹{selectedPackage?.amount || '---'}</span>
+                      <span className="ml-2 font-semibold text-xs">₹{selectedPackage?.amount || '---'}</span>
                     </div>
                     {/* Dynamically display validation fields */}
                     {gameData?.validationFields && Array.isArray(gameData.validationFields) ? (
@@ -908,7 +962,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                     <span className="text-gray-900 font-semibold text-sm">Volt Points</span>
                     <p className="text-gray-500 text-xs mt-1">Available: {walletBalance} coins</p>
                   </div>
-                  <div className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-md">
+                  <div className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-medium text-[10px] shadow-md">
                     {selectedPackage ? `₹${selectedPackage.amount}` : '---'}
                   </div>
                 </div>
@@ -936,7 +990,7 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
                   <div className="flex-1">
                     <span className="text-gray-900 font-semibold text-sm">UPI</span>
                   </div>
-                  <div className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-md">
+                  <div className="bg-[#2F6BFD] text-white px-3 py-1.5 rounded-lg font-medium text-[10px] shadow-md">
                     {isProcessingPayment ? 'Processing...' : selectedPackage ? `₹${selectedPackage.amount}` : '---'}
                   </div>
                 </div>

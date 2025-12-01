@@ -251,7 +251,7 @@ function HomeContent() {
             { icon: 'games', label: 'Games', href: '/' },
             { icon: 'orders', label: 'Orders', href: '/history' },
             { icon: 'leaderboards', label: 'Leaderboards', href: '/leaderboard' },
-            { icon: 'contact', label: 'Contact Us', href: '/social' },
+            { icon: 'contact', label: 'Social', href: '/social' },
             { icon: 'terms', label: 'Terms & Conditions', href: '#' },
             { icon: 'privacy', label: 'Privacy & Policy', href: '#' },
           ].map((item, index) => (
@@ -259,7 +259,7 @@ function HomeContent() {
               key={index}
               href={item.href}
               onClick={() => setIsMenuOpen(false)}
-              className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
+              className="w-full flex items-center gap-2 px-4 py-0.5 hover:bg-gray-50 active:bg-gray-100 transition-colors touch-manipulation"
             >
               <div className="w-10 h-10 bg-[#2F6BFD] rounded-lg flex items-center justify-center shrink-0">
                 <div className="text-white">
@@ -327,7 +327,7 @@ function HomeContent() {
         </div>
 
         {/* Log Out/Login Button */}
-        <div className="p-6 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200">
           {isAuthenticated ? (
             <button 
               onClick={handleLogout}
@@ -375,13 +375,13 @@ function HomeContent() {
           {/* Points Button - Only show if authenticated */}
           {isAuthenticated ? (
             <>
-              <Link href="/add-points" className="bg-white hover:bg-gray-50 rounded-full px-3 py-1.5 flex items-center gap-1.5 touch-manipulation shadow-md">
+              <Link href="/add-points" className="bg-white hover:bg-gray-50 rounded-full px-3 py-1 flex items-center gap-1.5 touch-manipulation shadow-md">
                 <Image
                   src="/coin.png"
                   alt="Coin"
-                  width={18}
-                  height={18}
-                  className="w-[18px] h-[18px] object-contain"
+                  width={28}
+                  height={28}
+                  className="w-[28px] h-[28px] object-contain"
                 />
                 <span className="text-gray-900 font-semibold text-base">
                   {isLoadingBalance ? '...' : walletBalance}

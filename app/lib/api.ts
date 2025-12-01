@@ -177,10 +177,15 @@ export const walletAPI = {
     });
   },
 
-  addCoins: async (amount: number) => {
+  addCoins: async (amount: number, redirectUrl?: string) => {
+    const body: Record<string, any> = { amount };
+    if (redirectUrl) {
+      body.redirectUrl = redirectUrl;
+    }
+
     return apiCall('/wallet/add', {
       method: 'POST',
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify(body),
     });
   },
 

@@ -168,7 +168,12 @@ function HistoryContent() {
 
     setIsLoadingWallet(true);
     try {
-      const response = await walletAPI.addCoins(amountNumber);
+      const redirectUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/payment-status?source=wallet`
+          : undefined;
+
+      const response = await walletAPI.addCoins(amountNumber, redirectUrl);
       const data = await response.json();
 
       if (response.ok && data.success) {
@@ -463,6 +468,12 @@ function HistoryContent() {
                   <span className="text-white/90 text-sm">Order ID</span>
                   <p className="text-white font-semibold text-base text-right">
                     {transaction.orderId}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/90 text-sm">Payment Status</span>
+                  <p className="text-white font-semibold text-base text-right capitalize">
+                    {transaction.status}
                   </p>
                 </div>
                 <div className="flex items-center justify-between">

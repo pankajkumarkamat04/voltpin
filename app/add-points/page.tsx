@@ -50,7 +50,12 @@ function AddPointsContent() {
 
     setIsLoading(true);
     try {
-      const response = await walletAPI.addCoins(amountNumber);
+      const redirectUrl =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/payment-status?source=wallet`
+          : undefined;
+
+      const response = await walletAPI.addCoins(amountNumber, redirectUrl);
       const data = await response.json();
 
       if (response.ok && data.success) {

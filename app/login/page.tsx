@@ -134,7 +134,7 @@ export default function Login() {
             </button>
 
             {/* Sign Up Link */}
-            <div className="text-center">
+            <div className="text-center mb-4">
               <p className="text-xs text-gray-800">
                 Don't have an account?{' '}
                 <a
@@ -143,6 +143,16 @@ export default function Login() {
                 >
                   Sign Up
                 </a>
+              </p>
+            </div>
+
+            {/* Agree to Terms */}
+            <div className="text-center">
+              <p className="text-xs text-gray-800">
+                I agree to the{' '}
+                <Link href="#" className="text-[#2F6BFD] font-medium hover:underline">Terms & Conditions</Link>
+                {' '}and{' '}
+                <Link href="#" className="text-[#2F6BFD] font-medium hover:underline">Privacy Policy</Link>
               </p>
             </div>
           </div>
