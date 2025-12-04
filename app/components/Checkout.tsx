@@ -334,9 +334,18 @@ export default function Checkout({ gameId = 'default-game-id' }: CheckoutProps =
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success('Payment completed successfully!');
-        setShowPaymentOptions(false);
-        router.push('/');
+        // Get orderId from response - could be in data.orderId, data.order._id, or data.orderId
+        const orderId = data.orderId || data.order?.orderId || data.order?._id || data.data?.orderId || data.data?.order?._id;
+        
+        if (orderId) {
+          toast.success('Payment completed successfully! Redirecting to order status...');
+          setShowPaymentOptions(false);
+          router.push(`/order-status?orderId=${orderId}`);
+        } else {
+          toast.success('Payment completed successfully!');
+          setShowPaymentOptions(false);
+          router.push('/');
+        }
       } else {
         toast.error(data.message || 'Failed to process payment');
       }

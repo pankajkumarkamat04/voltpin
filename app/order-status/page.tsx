@@ -7,70 +7,117 @@ import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { HiMenu, HiUser } from 'react-icons/hi';
 import { HiCheck, HiX, HiClock, HiBan } from 'react-icons/hi';
-import { transactionAPI } from '../lib/api';
+import { orderAPI } from '../lib/api';
 import ProtectedRoute from '../components/ProtectedRoute';
 
-function PaymentStatusContent() {
+function OrderStatusContent() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<'pending' | 'success' | 'failed' | 'cancelled'>('pending');
-  const [paymentDetails, setPaymentDetails] = useState({
+  const [status, setStatus] = useState<'pending' | 'success' | 'failed' | 'cancelled' | 'processing'>('pending');
+  const [orderDetails, setOrderDetails] = useState({
     orderId: '',
-    paymentTime: '',
-    gameName: '',
-    userId: '',
-    zoneId: '',
-    pack: '',
+    orderTime: '',
+    amount: '',
+    currency: '',
+    paymentMethod: '',
+    itemName: '',
+    quantity: '',
+    playerId: '',
+    server: '',
+    description: '',
+  });
+  const [performance, setPerformance] = useState({
+    totalProviders: 0,
+    successfulCount: 0,
+    failedCount: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchTransactionStatus = useCallback(async (clientTxnId: string, txnId: string) => {
+  const fetchOrderStatus = useCallback(async (orderId: string) => {
     try {
       setIsLoading(true);
-      console.log('Fetching transaction status:', { clientTxnId, txnId });
+      console.log('Fetching order status:', { orderId });
       
-      // Use whichever ID is available - pass undefined if empty string
-      const response = await transactionAPI.getTransactionStatus(
-        clientTxnId || undefined,
-        txnId || undefined
-      );
+      const response = await orderAPI.getOrderStatus(orderId);
       
-      console.log('Transaction status response:', response.status);
+      console.log('Order status response:', response.status);
       const responseData = await response.json();
-      console.log('Transaction status data:', responseData);
+      console.log('Order status data:', responseData);
 
       if (response.ok && responseData.success) {
-        // API response structure: { success: true, data: { ... } }
-        const tx = responseData.data;
+        const order = responseData.order;
         
-        if (!tx) {
-          console.error('Transaction data not found in response');
+        if (!order) {
+          console.error('Order data not found in response');
           setStatus('failed');
-          toast.error('Transaction data not found.');
+          toast.error('Order data not found.');
           return;
         }
 
-        // Map status to our valid status types
-        const txStatus = tx.status || 'pending';
-        const validStatus = ['pending', 'success', 'failed', 'cancelled'].includes(txStatus)
-          ? txStatus as 'pending' | 'success' | 'failed' | 'cancelled'
-          : 'pending';
+        // Map order status to our valid status types
+        const orderStatus = order.status || 'pending';
+        let validStatus: 'pending' | 'success' | 'failed' | 'cancelled' | 'processing' = 'pending';
+        
+        if (orderStatus === 'completed' || orderStatus === 'success') {
+          validStatus = 'success';
+        } else if (orderStatus === 'failed' || orderStatus === 'cancelled') {
+          validStatus = orderStatus as 'failed' | 'cancelled';
+        } else if (orderStatus === 'processing') {
+          validStatus = 'processing';
+        } else {
+          validStatus = 'pending';
+        }
+        
         setStatus(validStatus);
         
-        // Map API response fields to payment details
-        setPaymentDetails({
-          orderId: tx.orderId || clientTxnId || txnId || 'N/A',
-          paymentTime: tx.createdAt || tx.updatedAt || new Date().toISOString(),
-          gameName: tx.paymentNote || 'Game Purchase',
-          userId: tx.customerNumber || tx.customerName || 'N/A',
-          zoneId: 'N/A', // Not available in API response
-          pack: tx.paymentNote || 'Pack',
+        // Parse description if it's a JSON string
+        let parsedDescription = '';
+        let playerId = '';
+        let server = '';
+        
+        try {
+          if (order.description) {
+            const desc = typeof order.description === 'string' 
+              ? JSON.parse(order.description) 
+              : order.description;
+            parsedDescription = desc.text || order.description || '';
+            playerId = desc.playerId || '';
+            server = desc.server || '';
+          }
+        } catch {
+          parsedDescription = order.description || '';
+        }
+        
+        // Get item details
+        const firstItem = order.items && order.items.length > 0 ? order.items[0] : null;
+        
+        // Set order details - use top-level orderId from response, fallback to order._id
+        setOrderDetails({
+          orderId: responseData.orderId || order.orderId || order._id || orderId || 'N/A',
+          orderTime: order.createdAt || new Date().toISOString(),
+          amount: order.amount?.toString() || '0',
+          currency: order.currency || 'INR',
+          paymentMethod: order.paymentMethod || 'N/A',
+          itemName: firstItem?.itemName || parsedDescription || 'Diamond Pack',
+          quantity: firstItem?.quantity?.toString() || '1',
+          playerId: playerId || 'N/A',
+          server: server || 'N/A',
+          description: parsedDescription || 'Diamond pack purchase',
         });
+        
+        // Set performance metrics if available
+        if (responseData.performance) {
+          setPerformance({
+            totalProviders: responseData.performance.totalProviders || 0,
+            successfulCount: responseData.performance.successfulCount || 0,
+            failedCount: responseData.performance.failedCount || 0,
+          });
+        }
       } else {
         setStatus('failed');
-        toast.error(responseData.message || 'Failed to fetch transaction status.');
+        toast.error(responseData.message || 'Failed to fetch order status.');
       }
     } catch (error) {
-      console.error('Error fetching transaction status:', error);
+      console.error('Error fetching order status:', error);
       setStatus('failed');
       toast.error('Network error. Please check your connection.');
     } finally {
@@ -79,35 +126,29 @@ function PaymentStatusContent() {
   }, []);
 
   useEffect(() => {
-    // Handle both client_txn_id and clientTrxId/clientTxnId parameter names
-    const clientTxnId = searchParams.get('client_txn_id') || 
-                       searchParams.get('clientTrxId') || 
-                       searchParams.get('clientTxnId');
-    const txnId = searchParams.get('txn_id') || searchParams.get('txnId');
+    // Handle both orderId and order_id parameter names
+    const orderId = searchParams.get('orderId') || 
+                   searchParams.get('order_id');
     const statusParam = searchParams.get('status');
 
-    console.log('Payment status page loaded with params:', { clientTxnId, txnId, statusParam });
+    console.log('Order status page loaded with params:', { orderId, statusParam });
 
-    // Use whichever transaction ID is available
-    const transactionId = clientTxnId || txnId;
-
-    if (transactionId) {
-      console.log('Calling fetchTransactionStatus with:', { clientTxnId, txnId });
-      // Always pass client_txn_id format to API (server expects client_txn_id)
-      fetchTransactionStatus(clientTxnId || '', txnId || '');
+    if (orderId) {
+      console.log('Calling fetchOrderStatus with:', { orderId });
+      fetchOrderStatus(orderId);
     } else if (statusParam) {
       // If status is provided directly in URL, use it
-      const validStatus = ['pending', 'success', 'failed', 'cancelled'].includes(statusParam) 
-        ? statusParam as 'pending' | 'success' | 'failed' | 'cancelled'
+      const validStatus = ['pending', 'success', 'failed', 'cancelled', 'processing'].includes(statusParam) 
+        ? statusParam as 'pending' | 'success' | 'failed' | 'cancelled' | 'processing'
         : 'pending';
       setStatus(validStatus);
       setIsLoading(false);
     } else {
-      console.log('No transaction ID or status param found');
+      console.log('No order ID or status param found');
       setStatus('pending');
       setIsLoading(false);
     }
-  }, [searchParams, fetchTransactionStatus]);
+  }, [searchParams, fetchOrderStatus]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -151,7 +192,7 @@ function PaymentStatusContent() {
         {isLoading ? (
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-[#2F6BFD] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-500">Checking payment status...</p>
+            <p className="text-gray-500">Checking order status...</p>
           </div>
         ) : (
           <>
@@ -160,6 +201,7 @@ function PaymentStatusContent() {
               status === 'success' ? 'bg-green-500' :
               status === 'failed' ? 'bg-red-500' :
               status === 'cancelled' ? 'bg-gray-500' :
+              status === 'processing' ? 'bg-blue-500' :
               'bg-yellow-500'
             }`}>
               {status === 'success' ? (
@@ -168,6 +210,8 @@ function PaymentStatusContent() {
                 <HiX className="text-white text-6xl" />
               ) : status === 'cancelled' ? (
                 <HiBan className="text-white text-6xl" />
+              ) : status === 'processing' ? (
+                <HiClock className="text-white text-6xl" />
               ) : (
                 <HiClock className="text-white text-6xl" />
               )}
@@ -175,56 +219,79 @@ function PaymentStatusContent() {
 
             {/* Status Title */}
             <h1 className="text-black font-bold text-3xl mb-8">
-              {status === 'success' ? 'Payment Successful' :
-               status === 'failed' ? 'Payment Failed' :
-               status === 'cancelled' ? 'Payment Cancelled' :
-               'Payment Pending'}
+              {status === 'success' ? 'Order Successful' :
+               status === 'failed' ? 'Order Failed' :
+               status === 'cancelled' ? 'Order Cancelled' :
+               status === 'processing' ? 'Order Processing' :
+               'Order Pending'}
             </h1>
           </>
         )}
 
-        {/* Payment Details Card */}
+        {/* Order Details Card */}
         {!isLoading && (
           <div className="w-full max-w-md bg-[#2F6BFD] rounded-2xl shadow-lg p-6 mb-8">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-white/90 text-sm">Order ID</span>
                 <p className="text-white font-semibold text-base text-right">
-                  {paymentDetails.orderId || 'N/A'}
+                  {orderDetails.orderId || 'N/A'}
                 </p>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-white/90 text-sm">Payment Time</span>
+                <span className="text-white/90 text-sm">Order Time</span>
                 <p className="text-white font-semibold text-base text-right">
-                  {formatDate(paymentDetails.paymentTime)}
+                  {formatDate(orderDetails.orderTime)}
                 </p>
               </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/90 text-sm">Game Name</span>
-              <p className="text-white font-semibold text-base text-right">
-                {paymentDetails.gameName}
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/90 text-sm">User ID</span>
-              <p className="text-white font-semibold text-base text-right">
-                {paymentDetails.userId}
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/90 text-sm">Zone ID</span>
-              <p className="text-white font-semibold text-base text-right">
-                {paymentDetails.zoneId}
-              </p>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/90 text-sm">Pack</span>
-              <p className="text-white font-semibold text-base text-right">
-                {paymentDetails.pack}
-              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-white/90 text-sm">Amount</span>
+                <p className="text-white font-semibold text-base text-right">
+                  {orderDetails.currency} {orderDetails.amount}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/90 text-sm">Payment Method</span>
+                <p className="text-white font-semibold text-base text-right capitalize">
+                  {orderDetails.paymentMethod}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/90 text-sm">Item</span>
+                <p className="text-white font-semibold text-base text-right">
+                  {orderDetails.itemName}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/90 text-sm">Quantity</span>
+                <p className="text-white font-semibold text-base text-right">
+                  {orderDetails.quantity}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/90 text-sm">Player ID</span>
+                <p className="text-white font-semibold text-base text-right">
+                  {orderDetails.playerId}
+                </p>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/90 text-sm">Server</span>
+                <p className="text-white font-semibold text-base text-right">
+                  {orderDetails.server}
+                </p>
+              </div>
+              {performance.totalProviders > 0 && (
+                <div className="pt-3 border-t border-white/20 mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white/90 text-sm">Providers</span>
+                    <p className="text-white font-semibold text-base text-right">
+                      {performance.successfulCount}/{performance.totalProviders} Successful
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
         )}
 
         {/* Action Buttons */}
@@ -245,7 +312,7 @@ function PaymentStatusContent() {
                 Back To Home
               </Link>
             </>
-          ) : status === 'pending' ? (
+          ) : status === 'pending' || status === 'processing' ? (
             <>
               <Link
                 href="/"
@@ -298,7 +365,7 @@ function PaymentStatusContent() {
   );
 }
 
-export default function PaymentStatus() {
+export default function OrderStatus() {
   return (
     <ProtectedRoute>
       <Suspense fallback={
@@ -306,10 +373,9 @@ export default function PaymentStatus() {
           <div className="text-gray-500">Loading...</div>
         </div>
       }>
-        <PaymentStatusContent />
+        <OrderStatusContent />
       </Suspense>
     </ProtectedRoute>
   );
 }
-
 

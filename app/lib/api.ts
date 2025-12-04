@@ -136,6 +136,16 @@ export const orderAPI = {
       method: 'GET',
     });
   },
+
+  getOrderStatus: async (orderId: string) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('orderId', orderId);
+
+    console.log('Calling order status API:', `/order/order-status?${queryParams.toString()}`);
+    return apiCall(`/order/order-status?${queryParams.toString()}`, {
+      method: 'GET',
+    });
+  },
 };
 
 // Transaction APIs
@@ -163,7 +173,14 @@ export const transactionAPI = {
       queryParams.append('txn_id', txnId);
     }
 
-    return apiCall(`/transaction/status?${queryParams.toString()}`, {
+    // Build query string - only add ? if there are params
+    const queryString = queryParams.toString();
+    const endpoint = queryString 
+      ? `/transaction/status?${queryString}`
+      : '/transaction/status';
+
+    console.log('Calling transaction status API:', endpoint);
+    return apiCall(endpoint, {
       method: 'GET',
     });
   },
